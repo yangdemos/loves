@@ -1,0 +1,31 @@
+# Dependencies
+server/node_modules/
+
+# Runtime uploads & output
+uploads/
+output/
+
+# Logs
+server.log
+*.log
+
+# Binary tools / archives
+ffmpeg-essentials/
+ffmpeg-essentials.zip
+*.zip
+
+# Screenshots (test artifacts)
+screenshot-*.png
+
+# Agent / tool metadata
+.agents/
+skills-lock.json
+
+# Large media source files
+coverr_video.mp4
+
+# Windows artifacts
+nul
+
+# Orphaned file (wrong path copy artifact)
+UserslenovoDesktoplove*.css
