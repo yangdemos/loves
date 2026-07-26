@@ -29,3 +29,7 @@ nul
 
 # Orphaned file (wrong path copy artifact)
 UserslenovoDesktoplove*.css
+
+# Orphaned git directories (empty artifacts)
+loves/
+UserslenovoDesktoplove_and_peace_repo/
