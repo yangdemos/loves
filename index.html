@@ -86,7 +86,7 @@
     <section id="timeline" class="section timeline-section">
         <div class="section-bg"></div>
         <div class="container">
-            <div class="section-header">
+            <div class="section-header light">
                 <span class="section-number">01</span>
                 <h2 class="section-title">我们的旅程</h2>
                 <div class="section-divider"></div>
@@ -199,7 +199,23 @@
                 <div class="section-divider"></div>
                 <p class="section-desc">时间冻结的瞬间</p>
             </div>
-            <div class="gallery-grid" id="gallery-grid"></div>
+            <div class="round-carousel" id="roundCarousel">
+                <div class="carousel-perspective">
+                    <div class="carousel-container" id="carouselContainer"></div>
+                </div>
+                <div class="carousel-controls">
+                    <button class="carousel-btn carousel-prev" id="carouselPrev" aria-label="上一张">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="carousel-dots" id="carouselDots"></div>
+                    <button class="carousel-btn carousel-next" id="carouselNext" aria-label="下一张">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="carousel-hint">
+                    <span>自动旋转 · 拖拽探索</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -342,11 +358,22 @@
         <div class="modal-container">
             <button class="modal-close" aria-label="关闭">&times;</button>
             <div class="modal-hero" id="modal-hero"></div>
+            <h3 class="modal-location-title" id="modal-location-title"></h3>
             <div class="modal-body">
                 <p class="modal-description" id="modal-description"></p>
                 <h3 class="modal-photos-title">回忆</h3>
                 <div class="modal-photos-grid" id="modal-photos-grid"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ===== IMAGE LIGHTBOX ===== -->
+    <div id="image-lightbox" class="image-lightbox">
+        <div class="image-lightbox-overlay"></div>
+        <button class="image-lightbox-close" aria-label="关闭">&times;</button>
+        <div class="image-lightbox-content">
+            <img class="image-lightbox-img" id="lightbox-img" src="" alt="" />
+            <div class="image-lightbox-caption" id="lightbox-caption"></div>
         </div>
     </div>
 
@@ -361,6 +388,7 @@
     <script src="js/globe.js"></script>
     <script src="js/main.js"></script>
     <script src="js/video-maker.js"></script>
+    <script src="js/reminder.js"></script>
 
     <!-- Fallback: force-hide loader even if CDN resources fail or DOMContentLoaded is delayed -->
     <script>

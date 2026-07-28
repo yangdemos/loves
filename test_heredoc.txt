@@ -1,0 +1,5 @@
+  // --- 3D Round Carousel ---
+  const carouselContainer = document.getElementById("carouselContainer");
+  const carouselPrev = document.getElementById("carouselPrev");
+  const carouselNext = document.getElementById("carouselNext");
+  const carouselDots = document.getElementById("carouselDots");

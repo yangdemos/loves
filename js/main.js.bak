@@ -135,122 +135,119 @@ document.addEventListener('DOMContentLoaded', function() {
     letterObserver.observe(letterBody);
   }
 
-  // --- 3D Round Carousel (always auto-rotating + drag momentum) ---
-  const carouselContainer = document.getElementById("carouselContainer");
-  const carouselPrev = document.getElementById("carouselPrev");
-  const carouselNext = document.getElementById("carouselNext");
-  const carouselDots = document.getElementById("carouselDots");
+  // --- 3D Round Carousel (auto-rotating) ---
+  const carouselContainer = document.getElementById('carouselContainer');
+  const carouselPrev = document.getElementById('carouselPrev');
+  const carouselNext = document.getElementById('carouselNext');
+  const carouselDots = document.getElementById('carouselDots');
 
   if (carouselContainer && LOVE_DATA.gallery && LOVE_DATA.gallery.length > 0) {
     const items = LOVE_DATA.gallery;
     const slideCount = items.length;
 
     // ---- Config ----
-    const BASE_SPEED = 0.3;           // baseline auto-rotation (deg/frame)
-    const DRAG_SENSITIVITY = 0.04;    // degrees per pixel dragged
-    const FRICTION = 0.92;            // extra velocity decay (0-1)
-    const MIN_EXTRA = 0.01;           // threshold to zero out extraVelocity
+    const DEG_PER_SEC = 18;          // auto-rotation speed (deg/sec)
+    const DRAG_SENSITIVITY = 0.35;   // degrees per pixel dragged
+    const FRICTION = 0.92;           // momentum decay (0-1)
+    const MIN_VELOCITY = 0.01;       // stop threshold
     const BASE_RADIUS = 380;
-    const TILT_DEG = 0;
+    const TILT_DEG = -8;             // slight upward tilt
 
     // ---- State ----
-    let rotY = 0;                     // cumulative rotation angle of the ring
-    let extraVelocity = 0;            // extra speed from drag/flick (decays to 0)
+    let rotY = 0;                    // cumulative rotation angle of the ring
+    let velocity = 0;               // current momentum (deg/frame)
     let isDragging = false;
+    let isAutoRotating = true;
     let prevX = 0;
-    let dragHistory = [];             // for flick detection (last 5 positions)
+    let dragHistory = [];           // for flick detection (last 5 positions)
     let animationId = null;
     let isVisible = false;
 
     // Create a ring wrapper inside the container
-    const ring = document.createElement("div");
-    ring.className = "carousel-ring";
+    const ring = document.createElement('div');
+    ring.className = 'carousel-ring';
     carouselContainer.appendChild(ring);
 
     // Render slides
     items.forEach(function(item, i) {
-      const slide = document.createElement("div");
-      slide.className = "carousel-slide";
+      const slide = document.createElement('div');
+      slide.className = 'carousel-slide';
       slide.dataset.index = i;
 
-      const img = document.createElement("img");
+      const img = document.createElement('img');
       img.src = item.src;
       img.alt = item.label;
 
-      const overlay = document.createElement("div");
-      overlay.className = "slide-overlay";
+      const overlay = document.createElement('div');
+      overlay.className = 'slide-overlay';
 
-      const label = document.createElement("div");
-      label.className = "slide-label";
+      const label = document.createElement('div');
+      label.className = 'slide-label';
       label.textContent = item.label;
 
       overlay.appendChild(label);
       slide.appendChild(img);
       slide.appendChild(overlay);
-
-      // Click to open lightbox
-      slide.addEventListener('click', function(e) {
-        // Don't trigger if user was dragging
-        if (isDragging) return;
-        openGalleryLightbox(i);
-      });
-
       ring.appendChild(slide);
     });
 
     // Build dots
     for (let i = 0; i < slideCount; i++) {
-      const dot = document.createElement("button");
-      dot.className = "carousel-dot";
-      dot.setAttribute("aria-label", "转到第 " + (i + 1) + " 张");
-      if (i === 0) dot.classList.add("active");
-      dot.addEventListener("click", function() { snapToIndex(i); });
+      const dot = document.createElement('button');
+      dot.className = 'carousel-dot';
+      dot.setAttribute('aria-label', '转到第 ' + (i + 1) + ' 张');
+      if (i === 0) dot.classList.add('active');
+      dot.addEventListener('click', function() { snapToIndex(i); });
       carouselDots.appendChild(dot);
     }
 
     // ---- Positioning ----
-    function positionSlides(rotation) {
-      const slides = ring.querySelectorAll(".carousel-slide");
+    function positionSlides() {
+      const slides = ring.querySelectorAll('.carousel-slide');
       const total = slides.length;
       const angleStep = 360 / total;
-      const containerWidth = carouselContainer.clientWidth;
-      const radius = Math.max(250, Math.min(500, (containerWidth || 800) * 0.55));
+      const radius = Math.max(280, Math.min(BASE_RADIUS, window.innerWidth * 0.22));
 
       slides.forEach(function(slide, i) {
-        const angle = angleStep * i + (rotation || 0);
+        const angle = angleStep * i;
         const rad = (angle * Math.PI) / 180;
-        const x = radius * Math.sin(rad);
-        const z = radius * Math.cos(rad);
-        // No rotateY — every slide always faces the camera (billboard-style)
+        const x = Math.sin(rad) * radius;
+        const z = Math.cos(rad) * radius;
+
         slide.style.transform =
-          "translateX(" + x + "px) translateZ(" + z + "px)";
-        slide.dataset.angle = angle;
+          'translateX(' + x + 'px) translateZ(' + z + 'px) rotateY(' + (-angle) + 'deg)';
+
+        // Update active state and overlay based on which slide is most forward
+        // We'll handle this in the animation loop instead
       });
 
       return radius;
     }
 
-    let radius = positionSlides(0);
+    let radius = positionSlides();
 
+    // ---- Update loop ----
     function updateVisibleSlides(currentRotY) {
-      const slides = ring.querySelectorAll(".carousel-slide");
-      const dots = carouselDots.querySelectorAll(".carousel-dot");
+      const slides = ring.querySelectorAll('.carousel-slide');
+      const dots = carouselDots.querySelectorAll('.carousel-dot');
       const total = slides.length;
       const angleStep = 360 / total;
 
-      // Find the closest slide to the front (0 deg mod 360)
+      // Find the closest slide to the front (0° mod 360)
       let minDist = Infinity;
       let closestIdx = 0;
 
       slides.forEach(function(slide, i) {
+        // Each slide's world angle = currentRotY + i * angleStep
         let worldAngle = ((currentRotY + i * angleStep) % 360 + 360) % 360;
+        // Distance from front (0°)
         let dist = Math.min(worldAngle, 360 - worldAngle);
         slide.dataset.worldAngle = worldAngle;
 
         // Opacity based on angular distance from front
-        const opacity = Math.max(0.08, 1 - (dist / 170) * 0.7);
+        const opacity = dist > 120 ? 0 : 1 - (dist / 120) * 0.4;
         slide.style.opacity = opacity;
-        slide.style.pointerEvents = dist < 50 ? "auto" : "none";
+        slide.style.pointerEvents = dist < 50 ? 'auto' : 'none';
 
         if (dist < minDist) {
           minDist = dist;
@@ -260,12 +257,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Update active class
       slides.forEach(function(slide, i) {
-        slide.classList.toggle("active", i === closestIdx);
+        slide.classList.toggle('active', i === closestIdx);
       });
 
       // Update dots
       dots.forEach(function(d, i) {
-        d.classList.toggle("active", i === closestIdx);
+        d.classList.toggle('active', i === closestIdx);
       });
     }
 
@@ -276,24 +273,28 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      // Apply baseline auto-rotation (paused while dragging)
-      if (!isDragging) {
-        rotY += BASE_SPEED;
+      if (!isDragging && isAutoRotating) {
+        velocity = DEG_PER_SEC / 60; // per-frame steady speed
       }
 
-      // Apply extra velocity (from drag/flick) and decay it
-      if (isDragging || Math.abs(extraVelocity) > MIN_EXTRA) {
-        rotY += extraVelocity;
-        if (!isDragging) {
-          extraVelocity *= FRICTION;
-          if (Math.abs(extraVelocity) < MIN_EXTRA) {
-            extraVelocity = 0;
+      if (Math.abs(velocity) > MIN_VELOCITY || isDragging) {
+        rotY += velocity;
+        velocity *= FRICTION;
+        if (!isDragging && Math.abs(velocity) < MIN_VELOCITY) {
+          velocity = 0;
+          // Resume auto-rotation after settling
+          if (isAutoRotating) {
+            velocity = DEG_PER_SEC / 60;
           }
         }
+      } else if (isAutoRotating) {
+        rotY += DEG_PER_SEC / 60;
       }
 
-      // Reposition slides on the circle (always facing camera)
-      positionSlides(rotY);
+      // Apply ring rotation with tilt
+      ring.style.transform =
+        'rotateY(' + rotY + 'deg) rotateX(' + TILT_DEG + 'deg)';
+
       updateVisibleSlides(rotY);
 
       animationId = requestAnimationFrame(animate);
@@ -316,24 +317,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ---- Snap to a specific slide ----
     function snapToIndex(index) {
-      const total = ring.querySelectorAll(".carousel-slide").length;
+      const total = ring.querySelectorAll('.carousel-slide').length;
       const angleStep = 360 / total;
-      // Target rotY so that slide index faces front (0 deg)
+      // Target rotY so that slide `index` faces front (0°)
       const targetRotY = -index * angleStep;
       // Animate smoothly
       const startRot = rotY;
-      const delta = ((targetRotY - startRot) % 360 + 540) % 360 - 180;
+      const delta = ((targetRotY - startRot) % 360 + 540) % 360 - 180; // shortest path
       const duration = 400;
       const startTime = performance.now();
 
       function snapAnim(now) {
         const t = Math.min((now - startTime) / duration, 1);
-        const ease = 1 - Math.pow(1 - t, 3);
+        const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
         rotY = startRot + delta * ease;
+        ring.style.transform =
+          'rotateY(' + rotY + 'deg) rotateX(' + TILT_DEG + 'deg)';
+        updateVisibleSlides(rotY);
         if (t < 1) {
           requestAnimationFrame(snapAnim);
         } else {
-          updateVisibleSlides(rotY);
+          rotY = startRot + delta;
+          velocity = DEG_PER_SEC / 60; // resume auto
         }
       }
       requestAnimationFrame(snapAnim);
@@ -342,17 +347,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // ---- Drag handlers ----
     function onDragStart(clientX) {
       isDragging = true;
+      isAutoRotating = false;
       prevX = clientX;
-      extraVelocity = 0;  // reset residual momentum so drag starts clean
       dragHistory = [{ x: clientX, t: performance.now() }];
-      carouselContainer.style.cursor = "grabbing";
+      carouselContainer.style.cursor = 'grabbing';
     }
 
     function onDragMove(clientX) {
       if (!isDragging) return;
       const dx = clientX - prevX;
       prevX = clientX;
-      extraVelocity = dx * DRAG_SENSITIVITY;
+      velocity += dx * DRAG_SENSITIVITY;
 
       dragHistory.push({ x: clientX, t: performance.now() });
       if (dragHistory.length > 5) dragHistory.shift();
@@ -361,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function onDragEnd() {
       if (!isDragging) return;
       isDragging = false;
-      carouselContainer.style.cursor = "grab";
+      carouselContainer.style.cursor = 'grab';
 
       // Momentum from flick
       if (dragHistory.length >= 2) {
@@ -370,104 +375,116 @@ document.addEventListener('DOMContentLoaded', function() {
         const dt = last.t - first.t;
         if (dt > 0 && dt < 300) {
           const flickVelocity = (last.x - first.x) / dt * 15;
-          extraVelocity += flickVelocity * DRAG_SENSITIVITY;
+          velocity += flickVelocity * DRAG_SENSITIVITY;
         }
       }
 
-      // No setTimeout - baseline auto-rotation continues immediately
+      // Restore auto-rotation after a short delay
+      setTimeout(function() {
+        if (!isDragging) {
+          isAutoRotating = true;
+          // Keep current momentum, let it blend naturally
+        }
+      }, 800);
     }
 
     // ---- Mouse events ----
-    carouselContainer.addEventListener("mousedown", function(e) {
+    carouselContainer.addEventListener('mousedown', function(e) {
       onDragStart(e.clientX);
       e.preventDefault();
     });
 
-    window.addEventListener("mousemove", function(e) {
+    window.addEventListener('mousemove', function(e) {
       if (!isDragging) return;
       onDragMove(e.clientX);
     });
 
-    window.addEventListener("mouseup", function() {
+    window.addEventListener('mouseup', function() {
       onDragEnd();
     });
 
     // ---- Touch events ----
-    carouselContainer.addEventListener("touchstart", function(e) {
+    carouselContainer.addEventListener('touchstart', function(e) {
       onDragStart(e.touches[0].clientX);
     }, { passive: true });
 
-    carouselContainer.addEventListener("touchmove", function(e) {
+    carouselContainer.addEventListener('touchmove', function(e) {
       if (!isDragging) return;
       onDragMove(e.touches[0].clientX);
     }, { passive: true });
 
-    carouselContainer.addEventListener("touchend", function() {
+    carouselContainer.addEventListener('touchend', function() {
       onDragEnd();
     }, { passive: true });
 
     // ---- Keyboard ----
-    document.addEventListener("keydown", function(e) {
+    document.addEventListener('keydown', function(e) {
       if (!isVisible) return;
-      if (e.key === "ArrowLeft") {
-        const total = ring.querySelectorAll(".carousel-slide").length;
-        const dots = carouselDots.querySelectorAll(".carousel-dot");
+      if (e.key === 'ArrowLeft') {
+        const total = ring.querySelectorAll('.carousel-slide').length;
+        const dots = carouselDots.querySelectorAll('.carousel-dot');
         let activeIdx = 0;
-        dots.forEach(function(d, i) { if (d.classList.contains("active")) activeIdx = i; });
+        dots.forEach(function(d, i) { if (d.classList.contains('active')) activeIdx = i; });
         snapToIndex((activeIdx - 1 + total) % total);
-      } else if (e.key === "ArrowRight") {
-        const total = ring.querySelectorAll(".carousel-slide").length;
-        const dots = carouselDots.querySelectorAll(".carousel-dot");
+      } else if (e.key === 'ArrowRight') {
+        const total = ring.querySelectorAll('.carousel-slide').length;
+        const dots = carouselDots.querySelectorAll('.carousel-dot');
         let activeIdx = 0;
-        dots.forEach(function(d, i) { if (d.classList.contains("active")) activeIdx = i; });
+        dots.forEach(function(d, i) { if (d.classList.contains('active')) activeIdx = i; });
         snapToIndex((activeIdx + 1) % total);
       }
     });
 
     // ---- Button controls ----
     if (carouselNext) {
-      carouselNext.addEventListener("click", function() {
-        const dots = carouselDots.querySelectorAll(".carousel-dot");
+      carouselNext.addEventListener('click', function() {
+        const dots = carouselDots.querySelectorAll('.carousel-dot');
         let activeIdx = 0;
-        dots.forEach(function(d, i) { if (d.classList.contains("active")) activeIdx = i; });
+        dots.forEach(function(d, i) { if (d.classList.contains('active')) activeIdx = i; });
         snapToIndex((activeIdx + 1) % slideCount);
       });
     }
     if (carouselPrev) {
-      carouselPrev.addEventListener("click", function() {
-        const dots = carouselDots.querySelectorAll(".carousel-dot");
+      carouselPrev.addEventListener('click', function() {
+        const dots = carouselDots.querySelectorAll('.carousel-dot');
         let activeIdx = 0;
-        dots.forEach(function(d, i) { if (d.classList.contains("active")) activeIdx = i; });
+        dots.forEach(function(d, i) { if (d.classList.contains('active')) activeIdx = i; });
         snapToIndex((activeIdx - 1 + slideCount) % slideCount);
       });
     }
 
     // ---- Window resize ----
     let resizeTimer;
-    window.addEventListener("resize", function() {
+    window.addEventListener('resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        radius = positionSlides(rotY);
+        radius = positionSlides();
       }, 150);
     });
 
-    // ---- IntersectionObserver for visibility ----
-    if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            startAnimation();
-          } else {
-            stopAnimation();
-          }
-        });
-      }, { threshold: 0.1 });
-      observer.observe(carouselContainer);
-    } else {
-      startAnimation();
-    }
-  }
+    // ---- Visibility observer ----
+    const carouselObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && !isVisible) {
+          startAnimation();
+        } else if (!entry.isIntersecting && isVisible) {
+          stopAnimation();
+        }
+      });
+    }, { threshold: 0.05 });
+    carouselObserver.observe(document.getElementById('roundCarousel'));
 
+    // Also allow click on slide to open lightbox
+    carouselContainer.addEventListener('click', function(e) {
+      const slide = e.target.closest('.carousel-slide');
+      if (slide) {
+        const idx = parseInt(slide.dataset.index);
+        if (!isNaN(idx)) {
+          openGalleryLightbox(idx);
+        }
+      }
+    });
+  }
 
   // --- Gallery Lightbox (full-screen image viewer for carousel) ---
   function openGalleryLightbox(index) {

@@ -116,14 +116,21 @@ const LOVE_DATA = {
 
     // Gallery photos (placeholders)
     gallery: [
-        { src: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&q=80', label: '第一次约会' },
-        { src: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=600&q=80', label: '日落漫步' },
-        { src: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80', label: '城市灯火' },
-        { src: 'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=600&q=80', label: '海滩日' },
-        { src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80', label: '冒险' },
-        { src: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&q=80', label: '温馨夜晚' },
-        { src: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80', label: '晚餐约会' },
-        { src: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&q=80', label: '在一起' }
+        { src: 'images/gallery/photo1.jpg', label: '第一次约会' },
+        { src: 'images/gallery/photo2.jpg', label: '日落漫步' },
+        { src: 'images/gallery/photo3.jpg', label: '城市灯火' },
+        { src: 'images/gallery/photo4.jpg', label: '海滩日' },
+        { src: 'images/gallery/photo5.jpg', label: '冒险' },
+        { src: 'images/gallery/photo6.jpg', label: '温馨夜晚' },
+        { src: 'images/gallery/photo7.jpg', label: '晚餐约会' },
+        { src: 'images/gallery/photo8.jpg', label: '在一起' },
+        { src: 'images/gallery/photo9.jpg', label: '永恒时刻' },
+        { src: 'images/gallery/photo1.jpg', label: '樱花树下' },
+        { src: 'images/gallery/photo2.jpg', label: '星空夜话' },
+        { src: 'images/gallery/photo3.jpg', label: '午后咖啡' },
+        { src: 'images/gallery/photo4.jpg', label: '雨中共伞' },
+        { src: 'images/gallery/photo5.jpg', label: '秋叶小径' },
+        { src: 'images/gallery/photo6.jpg', label: '手牵手' }
     ]
 };
 

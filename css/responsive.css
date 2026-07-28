@@ -7,8 +7,6 @@
   .hero-title { font-size: 3.5rem; }
   .section-title { font-size: 2.2rem; }
   .counters-grid { grid-template-columns: repeat(2, 1fr); }
-  .gallery-grid { grid-template-columns: repeat(3, 1fr); }
-  .gallery-item:nth-child(1) { grid-column: span 2; grid-row: span 1; }
   .letter-envelope { padding: 40px 30px; }
   .globe-locations-list { gap: 8px; }
 }
@@ -71,10 +69,6 @@
   /* Globe */
   #globe-canvas { height: 340px; }
   .globe-location-chip { font-size: 0.78rem; padding: 6px 14px; }
-
-  /* Gallery */
-  .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .gallery-item:nth-child(1) { grid-column: span 2; }
 
   /* Video maker */
   .vm-card { padding: 24px 20px; }

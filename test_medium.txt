@@ -1,0 +1,31 @@
+  // --- 3D Round Carousel (always auto-rotating + drag momentum) ---
+  const carouselContainer = document.getElementById("carouselContainer");
+  const carouselPrev = document.getElementById("carouselPrev");
+  const carouselNext = document.getElementById("carouselNext");
+  const carouselDots = document.getElementById("carouselDots");
+
+  if (carouselContainer && LOVE_DATA.gallery && LOVE_DATA.gallery.length > 0) {
+    const items = LOVE_DATA.gallery;
+    const slideCount = items.length;
+
+    // ---- Config ----
+    const BASE_SPEED = 0.3;
+    const DRAG_SENSITIVITY = 0.35;
+    const FRICTION = 0.92;
+    const MIN_EXTRA = 0.01;
+    const BASE_RADIUS = 380;
+    const TILT_DEG = -8;
+
+    // ---- State ----
+    let rotY = 0;
+    let extraVelocity = 0;
+    let isDragging = false;
+    let prevX = 0;
+    let dragHistory = [];
+    let animationId = null;
+    let isVisible = false;
+
+    // Create a ring wrapper inside the container
+    const ring = document.createElement("div");
+    ring.className = "carousel-ring";
+    carouselContainer.appendChild(ring);
