@@ -30,6 +30,16 @@ nul
 # Orphaned file (wrong path copy artifact)
 UserslenovoDesktoplove*.css
 
+# Temp / debug / scratch files
+_fix_*.js
+*_new.js
+*.bak
+script.js
+
+# Test artifacts
+test_*
+test*.png
+
 # Orphaned git directories (empty artifacts)
 loves/
 UserslenovoDesktoplove_and_peace_repo/
