@@ -49,13 +49,27 @@ document.addEventListener('DOMContentLoaded', function() {
         current = target;
         clearInterval(timer);
       }
-      element.textContent = current + (target >= 1000 ? '+' : '+');
+      element.textContent = element.hasAttribute('data-plain') ? current : current + '+';
     }, 25);
   }
 
   // Intersection Observer for stats
   const statNumbers = document.querySelectorAll('.counter-value');
   if (statNumbers.length > 0) {
+    // Anniversary stats: compute days & months since 2024-10-21 (auto +1 daily)
+    const dayEl = document.querySelector('[data-anniversary="days"]');
+    const monthEl = document.querySelector('[data-anniversary="months"]');
+    if (dayEl && monthEl) {
+      const start = new Date(2024, 9, 21); // 2024-10-21
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      start.setHours(0, 0, 0, 0);
+      const days = Math.round((today - start) / 86400000);
+      let months = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+      if (today.getDate() < start.getDate()) months--;
+      dayEl.setAttribute('data-target', days);
+      monthEl.setAttribute('data-target', months);
+    }
     let statsAnimated = false;
     const observer = new IntersectionObserver(function(entries) {
       entries.forEach(entry => {
@@ -175,18 +189,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const img = document.createElement("img");
       img.src = item.src;
-      img.alt = item.label;
+      img.alt = '相册照片 ' + (i + 1);
 
-      const overlay = document.createElement("div");
-      overlay.className = "slide-overlay";
-
-      const label = document.createElement("div");
-      label.className = "slide-label";
-      label.textContent = item.label;
-
-      overlay.appendChild(label);
       slide.appendChild(img);
-      slide.appendChild(overlay);
 
       // Click to open lightbox
       slide.addEventListener('click', function(e) {
@@ -478,8 +483,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const caption = document.getElementById('lightbox-caption');
     if (!lb || !img) return;
     img.src = items[index].src;
-    img.alt = items[index].label;
-    caption.textContent = items[index].label + '  ' + (index + 1) + '/' + items.length;
+    img.alt = '相册照片 ' + (index + 1);
+    caption.textContent = '  ' + (index + 1) + '/' + items.length;
 
     // Prev / Next nav inside lightbox
     let lbNav = lb.querySelector('.image-lightbox-nav');
@@ -510,8 +515,8 @@ document.addEventListener('DOMContentLoaded', function() {
       unbindNav();
       index = (index - 1 + items.length) % items.length;
       img.src = items[index].src;
-      img.alt = items[index].label;
-      caption.textContent = items[index].label + '  ' + (index + 1) + '/' + items.length;
+      img.alt = '相册照片 ' + (index + 1);
+      caption.textContent = '  ' + (index + 1) + '/' + items.length;
       updateNav();
       bindNav();
     }
@@ -520,8 +525,8 @@ document.addEventListener('DOMContentLoaded', function() {
       unbindNav();
       index = (index + 1) % items.length;
       img.src = items[index].src;
-      img.alt = items[index].label;
-      caption.textContent = items[index].label + '  ' + (index + 1) + '/' + items.length;
+      img.alt = '相册照片 ' + (index + 1);
+      caption.textContent = '  ' + (index + 1) + '/' + items.length;
       updateNav();
       bindNav();
     }
@@ -572,16 +577,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const caption = document.getElementById('lightbox-caption');
     if (!lb || !img) return;
 
-    // Build a gallery array from location photos
-    const items = loc.photos.map(function(url) {
-      return { src: url, label: loc.name };
-    });
+    // Build a gallery array from the hero image + location photos
+    const items = [{ src: loc.heroImage }].concat(
+      loc.photos.map(function(url) { return { src: url }; })
+    );
     const startIndex = items.findIndex(function(item) { return item.src === photoUrl; });
     if (startIndex < 0) return;
 
     img.src = items[startIndex].src;
-    img.alt = items[startIndex].label;
-    caption.textContent = items[startIndex].label + '  ' + (startIndex + 1) + '/' + items.length;
+    img.alt = loc.name + ' 照片';
+    caption.textContent = '  ' + (startIndex + 1) + '/' + items.length;
 
     let lbNav = lb.querySelector('.image-lightbox-nav');
     if (!lbNav) {
@@ -613,8 +618,8 @@ document.addEventListener('DOMContentLoaded', function() {
       unbindNav();
       if (currentIdx > 0) currentIdx--;
       img.src = items[currentIdx].src;
-      img.alt = items[currentIdx].label;
-      caption.textContent = items[currentIdx].label + '  ' + (currentIdx + 1) + '/' + items.length;
+      img.alt = '相册照片 ' + (currentIdx + 1);
+      caption.textContent = '  ' + (currentIdx + 1) + '/' + items.length;
       updateNav();
       bindNav();
     }
@@ -623,8 +628,8 @@ document.addEventListener('DOMContentLoaded', function() {
       unbindNav();
       if (currentIdx < items.length - 1) currentIdx++;
       img.src = items[currentIdx].src;
-      img.alt = items[currentIdx].label;
-      caption.textContent = items[currentIdx].label + '  ' + (currentIdx + 1) + '/' + items.length;
+      img.alt = '相册照片 ' + (currentIdx + 1);
+      caption.textContent = '  ' + (currentIdx + 1) + '/' + items.length;
       updateNav();
       bindNav();
     }

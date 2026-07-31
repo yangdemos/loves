@@ -426,7 +426,7 @@
         memories.push({
           type: 'gallery',
           title: '一张照片，一段回忆',
-          body: item.label,
+          body: '一张来自相册的照片',
           data: {},
         });
       });

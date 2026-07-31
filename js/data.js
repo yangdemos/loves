@@ -15,122 +15,75 @@ const LOVE_DATA = {
         "这是我们的故事，一天一天写就。而它才刚刚开始。"
     ],
 
-    // Globe locations with coordinates (lat, lng), photo placeholders, and memories
+    // Globe locations with coordinates (lat, lng), local photos, and memories
     locations: [
         {
-            id: 'beijing',
-            name: '北京',
-            country: '中国',
-            lat: 39.9042,
-            lng: 116.4074,
-            color: '#e8c4b8',
-            date: '2024.01',
-            description: '一切开始的地方。这座城市见证了我们第一次问候，第一次手牵手走过古老的胡同，第一次在拥挤的街头目光相遇。',
-            heroImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
-            photos: [
-                'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80',
-                'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=600&q=80',
-                'https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=600&q=80',
-                'https://images.unsplash.com/photo-1578326457398-2aef5f1f3cd0?w=600&q=80',
-                'https://images.unsplash.com/photo-1560089166-5d0e6c3e3f7b?w=600&q=80',
-                'https://images.unsplash.com/photo-1581481616316-eef6e6f7d82e?w=600&q=80'
-            ]
-        },
-        {
-            id: 'shanghai',
-            name: '上海',
-            country: '中国',
-            lat: 31.2304,
-            lng: 121.4737,
-            color: '#c9a96e',
-            date: '2024.04',
-            description: '夜晚的外滩，霓虹灯影在水面上舞动。上海给了我们第一次共同的旅行，每一个街角都像电影里的场景。',
-            heroImage: 'https://images.unsplash.com/photo-1537531383490-6c1136db94f0?w=1200&q=80',
-            photos: [
-                'https://images.unsplash.com/photo-1537531383490-6c1136db94f0?w=600&q=80',
-                'https://images.unsplash.com/photo-1541103555897-04e0c7e4e646?w=600&q=80',
-                'https://images.unsplash.com/photo-1569050467447-ce54b3bb37ad?w=600&q=80',
-                'https://images.unsplash.com/photo-1559635222-cb1ce5bb07ba?w=600&q=80',
-                'https://images.unsplash.com/photo-1552223715-8acab8e457d6?w=600&q=80',
-                'https://images.unsplash.com/photo-1577954762025-4b26a3baaf72?w=600&q=80'
-            ]
-        },
-        {
-            id: 'paris',
-            name: 'Paris',
-            country: '法国',
-            lat: 48.8566,
-            lng: 2.3522,
-            color: '#e8a0a0',
-            date: '2024.07',
-            description: '爱情之城名副其实。从午夜闪烁的埃菲尔铁塔到蒙马特咖啡馆的宁静午后，巴黎将我们拥入它浪漫的怀抱。',
-            heroImage: 'https://images.unsplash.com/photo-1550340499-a6c60fc8287c?w=1200&q=80',
-            photos: [
-                'https://images.unsplash.com/photo-1550340499-a6c60fc8287c?w=600&q=80',
-                'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
-                'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=600&q=80',
-                'https://images.unsplash.com/photo-1509439581779-6298f75bf6e5?w=600&q=80',
-                'https://images.unsplash.com/photo-1549144511-f099e773c147?w=600&q=80',
-                'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&q=80'
-            ]
-        },
-        {
-            id: 'tokyo',
-            name: 'Tokyo',
-            country: '日本',
-            lat: 35.6762,
-            lng: 139.6503,
-            color: '#d4a89a',
+            id: 'auckland',
+            name: '奥克兰',
+            country: '新西兰',
+            lat: -36.8485,
+            lng: 174.7633,
+            color: '#4a9eff',
             date: '2024.10',
-            description: '春天的樱花，冬天的温暖拉面。东京是一场穿越霓虹街道和宁静庙宇的冒险——完美地映照了我们：充满活力而又平和。',
-            heroImage: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=1200&q=80',
+            description: '千帆之都——天空塔在暮色中点亮城市的天际线，海港大桥横跨碧蓝的怀特马塔港，独树山上的绿茵诉说着毛利与殖民的历史交响。从使命湾的沙滩到伊甸山的火山口，奥克兰用它的山海与光影，装点了我们旅途中最明亮的坐标。',
+            heroImage: 'https://images.unsplash.com/photo-1677825949600-e72d53c2fda0?w=1600&q=80',
             photos: [
-                'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=600&q=80',
-                'https://images.unsplash.com/photo-1549693578-d683be217e58?w=600&q=80',
-                'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80',
-                'https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?w=600&q=80',
-                'https://images.unsplash.com/photo-1557876188-3875a2d84c0c?w=600&q=80',
-                'https://images.unsplash.com/photo-1580640107396-0f7e8d8a0d0a?w=600&q=80'
+                'https://images.unsplash.com/photo-1700731711823-814c1a673fa6?w=800&q=80',
+                'https://images.unsplash.com/photo-1718398892690-41088e4dfd61?w=800&q=80',
+                'https://images.unsplash.com/photo-1745550663491-6cec967ce6e9?w=800&q=80'
             ]
         },
         {
-            id: 'bali',
-            name: 'Bali',
-            country: '印度尼西亚',
-            lat: -8.3405,
-            lng: 115.0920,
+            id: 'rotorua',
+            name: '罗托鲁阿',
+            country: '新西兰',
+            lat: -38.1368,
+            lng: 176.2497,
             color: '#c9a96e',
-            date: '2025.02',
-            description: '热带天堂与灵魂的交融。巴厘岛是我们放慢脚步、一起呼吸、更深地相爱的地方——在梯田间、在海洋日落中、在海岛生活的节奏里。',
-            heroImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
+            date: '2024.11',
+            description: '地热之城——硫磺温泉的蒸汽在晨曦中袅袅升腾，香槟池的斑斓色彩如同大地的调色盘，彩虹泉的清澈溪流中鳟鱼悠游。在这片被地热温暖的土地上，每一次呼吸都带着大地的温度，让我们的记忆也染上了硫磺味的暖意。',
+            heroImage: 'https://images.unsplash.com/photo-1693887245601-c43ee246efd8?w=1600&q=80',
             photos: [
-                'https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=600&q=80',
-                'https://images.unsplash.com/photo-1544644181-1484b3f6b1e8?w=600&q=80',
-                'https://images.unsplash.com/photo-1559622214-f8a0320960b0?w=600&q=80',
-                'https://images.unsplash.com/photo-1529841780444-295d65e8fcc4?w=600&q=80',
-                'https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=600&q=80',
-                'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80'
+                'https://images.unsplash.com/photo-1693887245601-c43ee246efd8?w=800&q=80',
+                'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+                'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800&q=80'
+            ]
+        },
+        {
+            id: 'xian',
+            name: '西安',
+            country: '中国',
+            lat: 34.3416,
+            lng: 108.9398,
+            color: '#e8b4b4',
+            date: '2025.01',
+            description: '十三朝古都——兵马俑的阵列在黄土之下沉睡了两千年，古城墙的砖石见证了帝国的兴衰更迭，钟鼓楼的晨钟暮鼓依然回荡在街巷之间。回民街的烟火气里，肉夹馍与biangbiang面的香气诉说着这座城市生生不息的日常。',
+            heroImage: 'https://images.unsplash.com/photo-1565344304100-2931794c111f?w=1600&q=80',
+            photos: [
+                'https://images.unsplash.com/photo-1773633495448-69b3fa83efd4?w=800&q=80',
+                'https://images.unsplash.com/photo-1716637116193-7b12401aa343?w=800&q=80',
+                'https://images.unsplash.com/photo-1665849189343-c302695244a4?w=800&q=80'
             ]
         }
     ],
 
     // Gallery photos (placeholders)
     gallery: [
-        { src: 'images/gallery/photo1.jpg', label: '第一次约会' },
-        { src: 'images/gallery/photo2.jpg', label: '日落漫步' },
-        { src: 'images/gallery/photo3.jpg', label: '城市灯火' },
-        { src: 'images/gallery/photo4.jpg', label: '海滩日' },
-        { src: 'images/gallery/photo5.jpg', label: '冒险' },
-        { src: 'images/gallery/photo6.jpg', label: '温馨夜晚' },
-        { src: 'images/gallery/photo7.jpg', label: '晚餐约会' },
-        { src: 'images/gallery/photo8.jpg', label: '在一起' },
-        { src: 'images/gallery/photo9.jpg', label: '永恒时刻' },
-        { src: 'images/gallery/photo1.jpg', label: '樱花树下' },
-        { src: 'images/gallery/photo2.jpg', label: '星空夜话' },
-        { src: 'images/gallery/photo3.jpg', label: '午后咖啡' },
-        { src: 'images/gallery/photo4.jpg', label: '雨中共伞' },
-        { src: 'images/gallery/photo5.jpg', label: '秋叶小径' },
-        { src: 'images/gallery/photo6.jpg', label: '手牵手' }
+        { src: 'assets/photos/Intimate/微信图片_20260729000314_12_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000321_13_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000337_16_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000346_17_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000348_18_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000356_19_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000405_20_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000414_21_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000422_22_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000425_23_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000511_27_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000524_28_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000607_30_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000610_31_1.jpg' },
+        { src: 'assets/photos/Intimate/微信图片_20260729000622_32_1.jpg' }
     ]
 };
 

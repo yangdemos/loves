@@ -806,25 +806,9 @@ input, textarea { font-family: inherit; }
   display: block;
   pointer-events: none;
 }
-.carousel-slide .slide-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 45%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  display: flex;
-  align-items: flex-end;
-  padding: 16px;
-}
-.carousel-slide.active .slide-overlay { opacity: 1; }
-.carousel-slide .slide-label {
-  color: #fff;
-  font-size: 0.85rem;
-  font-family: var(--font-sans);
-  font-weight: 500;
-  letter-spacing: 1.5px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
-}
+
+
+
 .carousel-controls {
   display: flex;
   align-items: center;

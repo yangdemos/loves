@@ -67,8 +67,9 @@
   .letter-header { font-size: 1rem; }
 
   /* Globe */
-  #globe-canvas { height: 340px; }
-  .globe-location-chip { font-size: 0.78rem; padding: 6px 14px; }
+  #globe-canvas { height: 360px; touch-action: none; }
+  .globe-location-chip { font-size: 0.78rem; padding: 8px 16px; min-height: 38px; }
+  .globe-location-chip:active { transform: scale(0.94); background: rgba(255,255,255,0.12); }
 
   /* Video maker */
   .vm-card { padding: 24px 20px; }
@@ -102,6 +103,9 @@
   .vm-result-actions { flex-direction: column; align-items: center; }
   .scroll-indicator span { font-size: 0.65rem; }
   .scroll-line { height: 28px; }
+  #globe-canvas { height: 300px; }
+  .modal-photos-grid { grid-template-columns: 1fr; gap: 8px; }
+  .modal-photo-img { height: 200px; }
 }
 
 /* --- Landscape phones --- */

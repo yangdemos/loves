@@ -23,6 +23,18 @@ skills-lock.json
 
 # Large media source files
 coverr_video.mp4
+*.bak*
+
+# Build outputs
+dist/
+
+# OCR models & scratch scripts
+*.traineddata
+_*.js
+build_*.py
+
+# Agent metadata
+skills/
 
 # Windows artifacts
 nul
