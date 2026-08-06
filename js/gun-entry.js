@@ -553,7 +553,8 @@ async function start() {
             landmarker = await createLandmarker("CPU");
         } catch (cpuErr) {
             console.error(cpuErr);
-            showFallback("手势引擎加载失败 — 请刷新重试");
+            const detail = (cpuErr && cpuErr.message ? cpuErr.message : String(cpuErr)).slice(0, 160);
+            showFallback(`手势引擎加载失败：${detail} — 请刷新重试`);
             return;
         }
     }

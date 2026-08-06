@@ -1,54 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>小猪欢迎回家</title>
-    <link rel="stylesheet" href="css/gun-entry.css">
+  <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#020304" />
+  <meta name="description" content="由本地手势识别控制的银色光粒子心。摄像头画面不显示、不录制、不上传。" />
+  <title>欢迎回家</title>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-    <!-- 摄像头：仅采集手势数据，画面不显示 -->
-    <video id="cam" autoplay playsinline muted></video>
+  <main aria-label="体感光粒子互动">
+    <canvas id="scene" aria-label="银色光粒子组成的心"></canvas>
+    <p id="status" class="sr-only" role="status" aria-live="polite">正在准备本地手势识别</p>
 
-    <!-- 粒子画布：光粒子爱心 + 爆炸特效 -->
-    <canvas id="fx"></canvas>
+    <button id="activate" class="activate" type="button" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4.5 8.3A2.3 2.3 0 0 1 6.8 6h6.7a2.3 2.3 0 0 1 2.3 2.3v7.4a2.3 2.3 0 0 1-2.3 2.3H6.8a2.3 2.3 0 0 1-2.3-2.3V8.3Z"/>
+        <path d="m15.8 10 3.3-1.7a.6.6 0 0 1 .9.5v6.4a.6.6 0 0 1-.9.5L15.8 14"/>
+      </svg>
+      <span>启用体感</span>
+    </button>
 
-    <!-- 准星（比枪时跟随爱心） -->
-    <div id="crosshair">
-        <div class="ring"></div>
-        <div class="dot"></div>
-    </div>
-
-    <!-- HUD -->
-    <div id="hud">
-        <div id="status">正在启动摄像头</div>
-        <div id="steps">
-            <span class="step">✋ 张开手掌 · 移动爱心</span>
-            <span class="step">🔫 比出手枪 · 心跳锁定</span>
-            <span class="step">💥 挥动手臂 · 开枪</span>
-        </div>
-        <div id="privacy">摄像头仅用于手势识别，画面不会显示或上传</div>
-    </div>
-
-    <!-- 开枪闪光 -->
-    <div id="flash"></div>
-
-    <!-- 六字浮现 -->
-    <div id="enterText">
-        <span>小</span>
-        <span>猪</span>
-        <span>欢</span>
-        <span>迎</span>
-        <span>回</span>
-        <span>家</span>
-    </div>
-
-    <!-- 回退入口 -->
-    <div id="fallback">
-        <p id="fbMsg">摄像头不可用或已被拒绝 — 请允许摄像头权限</p>
-        <button id="enterBtn">直接进入</button>
-    </div>
-
-    <script type="module" src="js/gun-entry.js"></script>
+    <aside id="debug" class="debug" hidden aria-hidden="true">
+      <span id="debug-mode">初始化</span>
+      <span id="debug-detail">模型加载中</span>
+    </aside>
+  </main>
+  <script type="module" src="./app.js?v=20260806-gesture-fix-3"></script>
 </body>
 </html>

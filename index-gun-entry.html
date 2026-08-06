@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>小猪欢迎回家</title>
+    <link rel="stylesheet" href="css/gun-entry.css">
+</head>
+<body>
+    <!-- 摄像头：仅采集手势数据，画面不显示 -->
+    <video id="cam" autoplay playsinline muted></video>
+
+    <!-- 粒子画布：光粒子爱心 + 爆炸特效 -->
+    <canvas id="fx"></canvas>
+
+    <!-- 准星（比枪时跟随爱心） -->
+    <div id="crosshair">
+        <div class="ring"></div>
+        <div class="dot"></div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div id="status">正在启动摄像头</div>
+        <div id="steps">
+            <span class="step">✋ 张开手掌 · 移动爱心</span>
+            <span class="step">🔫 比出手枪 · 心跳锁定</span>
+            <span class="step">💥 挥动手臂 · 开枪</span>
+        </div>
+        <div id="privacy">摄像头仅用于手势识别，画面不会显示或上传</div>
+    </div>
+
+    <!-- 开枪闪光 -->
+    <div id="flash"></div>
+
+    <!-- 六字浮现 -->
+    <div id="enterText">
+        <span>小</span>
+        <span>猪</span>
+        <span>欢</span>
+        <span>迎</span>
+        <span>回</span>
+        <span>家</span>
+    </div>
+
+    <!-- 回退入口 -->
+    <div id="fallback">
+        <p id="fbMsg">摄像头不可用或已被拒绝 — 请允许摄像头权限</p>
+        <button id="enterBtn">直接进入</button>
+    </div>
+
+    <script type="module" src="js/gun-entry.js"></script>
+</body>
+</html>

@@ -64,7 +64,7 @@
                 <span class="title-line">你和我</span>
                 <span class="title-line accent">永远</span>
             </h1>
-            <p class="hero-subtitle">每一个爱情故事都很美，但我们的故事是我最爱的</p>
+            <p class="hero-subtitle" id="hero-subtitle">每一个爱情故事都很美，但我们的故事是我最爱的</p>
             <div class="hero-cta">
                 <a href="#timeline" class="btn btn-primary">
                     开始我们的旅程
@@ -389,6 +389,28 @@
     <script src="js/main.js"></script>
     <script src="js/video-maker.js"></script>
     <script src="js/reminder.js"></script>
+
+    <!-- Random rotating subtitle: same title lines fixed big & bold, only the love-line below swaps -->
+    <script>
+      (function () {
+        var lines = [
+          '每一个爱情故事都很美，但我们的故事是我最爱的',
+          '世间万物与你，我都想要，但最贪婪的愿望，是陪你走完余生',
+          '遇见你之后，连平凡的日子都变成了值得纪念的节日',
+          '世界很大，风景很美，但我的目光只愿意落在你身上',
+          '和你在一起，就连虚度时光都变得理直气壮',
+          '别人用一生等一个晴天，我用余生陪你看每一次黄昏',
+          '我爱你，不是一时兴起，而是细水长流里藏着的笃定',
+          '花会再开，风会再来，而我想陪的人，从头到尾只有你',
+          '你是我平淡岁月里，突然亮起来的那束光',
+          '最好的情话不是我爱你，而是无论有多少次选择，我都选你'
+        ];
+        var el = document.getElementById('hero-subtitle');
+        if (el) {
+          el.textContent = lines[Math.floor(Math.random() * lines.length)];
+        }
+      })();
+    </script>
 
     <!-- Fallback: force-hide loader even if CDN resources fail or DOMContentLoaded is delayed -->
     <script>
