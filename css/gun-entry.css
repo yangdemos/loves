@@ -1,0 +1,346 @@
+/* ============================================
+   开枪入场页 — 黑色背景 · 光粒子爱心 · 手势交互
+   摄像头画面不外露，仅采集手势数据
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Serif SC", sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+/* ── 摄像头：仅采集，不外显 ── */
+#cam {
+    position: fixed;
+    left: -9999px;
+    top: -9999px;
+    width: 640px;
+    height: 480px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ── 粒子画布（爱心 + 爆炸全在这） ── */
+#fx {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ── 准星（比枪时跟随爱心） ── */
+#crosshair {
+    position: fixed;
+    left: 50%;
+    top: 42%;
+    width: 150px;
+    height: 150px;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+
+#crosshair.on {
+    opacity: 1;
+}
+
+#crosshair .ring {
+    position: absolute;
+    inset: 10px;
+    border: 2px solid rgba(255, 80, 120, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 22px rgba(255, 60, 110, 0.7), inset 0 0 22px rgba(255, 60, 110, 0.4);
+    animation: lockPulse 0.9s ease-in-out infinite;
+}
+
+#crosshair .dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin: -4px 0 0 -4px;
+    border-radius: 50%;
+    background: #ff2e63;
+    box-shadow: 0 0 14px #ff2e63;
+}
+
+@keyframes lockPulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scale(1.14);
+        opacity: 0.5;
+    }
+}
+
+/* ── HUD 状态与步骤 ── */
+#hud {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 7vh;
+    z-index: 3;
+    text-align: center;
+    pointer-events: none;
+}
+
+#status {
+    display: inline-block;
+    padding: 10px 24px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 140, 170, 0.3);
+    color: #ffdbe6;
+    font-size: clamp(13px, 2.6vw, 16px);
+    letter-spacing: 0.14em;
+    backdrop-filter: blur(6px);
+}
+
+#status::after {
+    content: "";
+    animation: dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0% {
+        content: "";
+    }
+    25% {
+        content: ".";
+    }
+    50% {
+        content: "..";
+    }
+    75%,
+    100% {
+        content: "...";
+    }
+}
+
+#steps {
+    display: flex;
+    justify-content: center;
+    gap: clamp(10px, 3vw, 28px);
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+.step {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: clamp(11px, 2.2vw, 13px);
+    color: rgba(255, 235, 242, 0.4);
+    border: 1px solid rgba(255, 235, 242, 0.12);
+    transition: all 0.3s ease;
+    letter-spacing: 0.08em;
+}
+
+.step.active {
+    color: #fff;
+    border-color: rgba(255, 90, 130, 0.75);
+    background: rgba(255, 60, 110, 0.2);
+    box-shadow: 0 0 16px rgba(255, 60, 110, 0.35);
+}
+
+/* 隐私提示 */
+#privacy {
+    margin-top: 12px;
+    font-size: clamp(10px, 1.8vw, 12px);
+    color: rgba(255, 220, 230, 0.35);
+    letter-spacing: 0.1em;
+}
+
+/* ── 开枪闪光 ── */
+#flash {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 7;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#flash.go {
+    animation: flashOut 0.5s ease-out forwards;
+}
+
+@keyframes flashOut {
+    0% {
+        opacity: 0.9;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+body.shake {
+    animation: shake 0.45s ease-out;
+}
+
+@keyframes shake {
+    0% {
+        transform: translate(0, 0);
+    }
+    20% {
+        transform: translate(-10px, 6px);
+    }
+    40% {
+        transform: translate(9px, -7px);
+    }
+    60% {
+        transform: translate(-7px, -4px);
+    }
+    80% {
+        transform: translate(5px, 3px);
+    }
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+/* ── 六字浮现 ── */
+#enterText {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(14px, 4vw, 46px);
+    z-index: 8;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+#enterText span {
+    font-family: "Noto Serif SC", "STKaiti", "KaiTi", "PingFang SC", serif;
+    font-size: clamp(44px, 12vw, 108px);
+    font-weight: 700;
+    background: linear-gradient(180deg, #fff3f7 0%, #ffb3c9 45%, #ff5c8a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 22px rgba(255, 60, 110, 0.55));
+    opacity: 0;
+    transform: translateY(46px) scale(0.9);
+    letter-spacing: 0.06em;
+}
+
+#enterText.show {
+    visibility: visible;
+}
+
+#enterText.show span {
+    animation: wordIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+#enterText.show span:nth-child(1) {
+    animation-delay: 0.15s;
+}
+
+#enterText.show span:nth-child(2) {
+    animation-delay: 0.35s;
+}
+
+#enterText.show span:nth-child(3) {
+    animation-delay: 0.55s;
+}
+
+#enterText.show span:nth-child(4) {
+    animation-delay: 0.75s;
+}
+
+#enterText.show span:nth-child(5) {
+    animation-delay: 0.95s;
+}
+
+#enterText.show span:nth-child(6) {
+    animation-delay: 1.15s;
+}
+
+@keyframes wordIn {
+    0% {
+        opacity: 0;
+        filter: blur(14px);
+        transform: translateY(46px) scale(0.9);
+    }
+    60% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(-6px) scale(1.04);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+    }
+}
+
+body.leaving {
+    opacity: 0;
+    transform: scale(1.08);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+/* ── 回退入口 ── */
+#fallback {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    text-align: center;
+    display: none;
+    background: rgba(16, 14, 24, 0.92);
+    padding: 34px 44px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 140, 170, 0.3);
+    backdrop-filter: blur(8px);
+}
+
+#fallback.show {
+    display: block;
+}
+
+#fallback p {
+    color: #ffdbe6;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+}
+
+#fallback button {
+    padding: 10px 30px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #ff5c8a, #ff2e63);
+    color: #fff;
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255, 46, 99, 0.4);
+    transition: transform 0.2s ease;
+}
+
+#fallback button:hover {
+    transform: translateY(-2px) scale(1.03);
+}
