@@ -7,7 +7,23 @@
   .hero-title { font-size: 3.5rem; }
   .section-title { font-size: 2.2rem; }
   .counters-grid { grid-template-columns: repeat(2, 1fr); }
-  .letter-envelope { padding: 40px 30px; }
+  .envelope-hint { font-size: 0.85rem; }
+  .letter-sheet-inner { padding: 24px 30px 38px; }
+  .letter-page-shell { width: min(100% - 32px, 1100px); padding-top: 96px; }
+  .letter-reading-layout { grid-template-columns: 1fr; }
+  .letter-outline-card {
+    position: relative;
+    top: auto;
+  }
+  .letter-outline {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .letter-outline-link {
+    width: auto;
+    min-width: 160px;
+    flex: 1 1 220px;
+  }
   .globe-locations-list { gap: 8px; }
 }
 
@@ -62,9 +78,28 @@
   .story-content p { font-size: 0.95rem; }
 
   /* Letter */
-  .letter-envelope { padding: 30px 20px; border-radius: 16px; }
-  .letter-body { font-size: 0.95rem; }
-  .letter-header { font-size: 1rem; }
+  .envelope { width: min(440px, 100%); }
+  .letter-sheet { margin-top: 3vh; height: 94vh; }
+  .letter-sheet-inner { padding: 22px 22px 34px; }
+  .letter-body { font-size: 0.97rem; }
+  .letter-page-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  .letter-hero-title { letter-spacing: 1px; }
+  .letter-hero-desc { font-size: 0.97rem; }
+  .letter-sheet.letter-sheet-standalone {
+    height: auto;
+    margin-top: 0;
+  }
+  .letter-sheet-standalone .letter-sheet-inner { padding: 24px 22px 32px; }
+  .letter-sheet-standalone .letter-sheet-paper { padding: 24px 20px 24px; }
+  .letter-sheet-standalone .letter-body { font-size: 0.98rem; line-height: 2.05; }
+  .letter-sheet-standalone .letter-body p { text-indent: 1.8em; }
+  .letter-heading-main { margin-bottom: 26px; }
+  .letter-outline-link:hover,
+  .letter-outline-link.is-active { transform: none; }
 
   /* Globe */
   #globe-canvas { height: 360px; touch-action: none; }
@@ -97,8 +132,32 @@
   .counter-label { font-size: 0.8rem; }
   .section-title { font-size: 1.5rem; }
   .nav-links { width: 100%; max-width: none; }
-  .letter-envelope { padding: 24px 16px; }
+  .envelope { width: 100%; }
+  .envelope-address { padding: 0 10%; }
+  .letter-sheet-inner { padding: 18px 16px 28px; }
   .letter-body { font-size: 0.9rem; line-height: 1.9; }
+  .letter-title { letter-spacing: 3px; }
+  .letter-page-shell { width: calc(100% - 20px); padding-top: 86px; padding-bottom: 56px; }
+  .letter-page-hero { gap: 18px; }
+  .letter-hero-kicker { letter-spacing: 3px; }
+  .letter-hero-title { font-size: 1.8rem; }
+  .letter-outline-card { padding: 18px 16px; border-radius: 18px; }
+  .letter-outline-link { min-width: 0; flex-basis: 100%; font-size: 0.84rem; }
+  .letter-sheet-topbar { padding: 16px 16px 12px; }
+  .letter-sheet-standalone .letter-sheet-inner { padding: 20px 16px 26px; }
+  .letter-sheet-standalone .letter-sheet-paper {
+    padding: 20px 14px 20px;
+    border-radius: 12px;
+    background-size: 100% 34px;
+    background-position: 0 20px;
+  }
+  .letter-sheet-standalone .letter-body { font-size: 0.92rem; line-height: 2; }
+  .letter-sheet-standalone .letter-body p { text-indent: 1.6em; }
+  .letter-heading-main,
+  .letter-sheet-standalone .letter-chapter,
+  .letter-signoff {
+    max-width: 100%;
+  }
   .vm-card { padding: 20px 14px; }
   .vm-result-actions { flex-direction: column; align-items: center; }
   .scroll-indicator span { font-size: 0.65rem; }

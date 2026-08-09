@@ -12,6 +12,8 @@ const debugDetail = document.getElementById('debug-detail');
 const TAU = Math.PI * 2;
 const SYSTEM_REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEBUG = new URLSearchParams(location.search).has('debug');
+const GUN_LOCK_GRACE = 560;
+const HOME_ENTRY_DELAY = SYSTEM_REDUCED ? 1800 : 3400;
 const LABELS = {
   IDLE: '等待手势',
   MOVE: '移动',
@@ -39,6 +41,11 @@ const state = {
   heartY: 0,
   targetX: 0,
   targetY: 0,
+  heartVelocityX: 0,
+  heartVelocityY: 0,
+  movementEnergy: 0,
+  particleScaleX: 1,
+  particleScaleY: 1,
   heartScale: 100,
   lockedX: 0,
   lockedY: 0,
@@ -52,6 +59,7 @@ const state = {
   shotCooldownUntil: 0,
   explosionAt: 0,
   messageAt: 0,
+  homeTransitionStarted: false,
   messageTargets: [],
   modelPhase: '等待手势模型',
   detectionTimer: 0,
@@ -140,6 +148,10 @@ function makeParticle(index) {
     alpha: .38 + Math.random() * .6,
     phase: Math.random() * TAU,
     twinkle: .55 + Math.random() * 1.4,
+    flow: .72 + Math.random() * .7,
+    lag: .28 + Math.random() * .72,
+    orbitDirection: Math.random() < .5 ? -1 : 1,
+    lastBeat: 0,
     tone: tone > .88 ? 2 : tone > .34 ? 1 : 0,
     seed: (index * .61803398875) % 1
   };
@@ -158,6 +170,8 @@ function computeScale() {
 }
 
 function positionParticlesImmediately() {
+  state.particleScaleX = 1;
+  state.particleScaleY = 1;
   for (const particle of state.particles) {
     particle.x = state.heartX + particle.hx * state.heartScale;
     particle.y = state.heartY + particle.hy * state.heartScale;
@@ -199,46 +213,148 @@ function resize() {
 }
 
 function heartbeatWave(now, fast) {
-  const bpm = fast ? 146 : 64;
+  const bpm = fast ? 118 : 62;
   const phase = (now / 1000 * bpm / 60) % 1;
-  const first = Math.exp(-Math.pow((phase - .06) / .055, 2));
-  const second = Math.exp(-Math.pow((phase - .23) / .075, 2));
-  return first + second * .5;
+  const contraction = Math.exp(-Math.pow((phase - .09) / .062, 2));
+  const firstRelease = Math.exp(-Math.pow((phase - .23) / .082, 2));
+  const recoil = Math.exp(-Math.pow((phase - .38) / .068, 2));
+  const secondRelease = Math.exp(-Math.pow((phase - .5) / .105, 2));
+  return -contraction * .72 + firstRelease * 1.16 - recoil * .2 + secondRelease * .58;
+}
+
+function breathingWave(now) {
+  const primary = Math.sin(now * .00145 - .8);
+  const secondary = Math.sin(now * .00073 + 1.4) * .28;
+  return primary * .72 + secondary;
 }
 
 function drawHeart(now, dt) {
-  const fastBeat = state.mode === 'GUN';
-  const amplitude = fastBeat ? .068 : .007;
-  const scale = state.heartScale * (1 + heartbeatWave(now, fastBeat) * amplitude);
+  const fastBeat = state.mode === 'GUN' || state.gunArmed;
+  // Heartbeat is essential gesture feedback, so reduced-motion softens it
+  // instead of disabling the lock confirmation entirely.
+  const motionAmount = SYSTEM_REDUCED ? .58 : 1;
+  const beat = heartbeatWave(now, fastBeat);
+  const breath = breathingWave(now);
+  const beatAmplitude = (fastBeat ? .15 : .016) * motionAmount;
+  const breathAmplitude = (fastBeat ? .018 : .026) * motionAmount;
+  const beatLift = beat * beatAmplitude;
+  const breathLift = breath * breathAmplitude;
+  const nextScaleX = 1 + beatLift + breathLift;
+  const nextScaleY = 1 + beatLift * 1.08 + breathLift * 1.16;
+  const particleScaleRatioX = clamp(nextScaleX / Math.max(.001, state.particleScaleX), .9, 1.11);
+  const particleScaleRatioY = clamp(nextScaleY / Math.max(.001, state.particleScaleY), .9, 1.11);
+  const scaleX = state.heartScale * nextScaleX;
+  const scaleY = state.heartScale * nextScaleY;
   const rotation = state.mode === 'MOVE' ? (state.targetX - state.heartX) / Math.max(1, state.width) * .25 : 0;
   const cos = Math.cos(rotation);
   const sin = Math.sin(rotation);
-  const spring = state.mode === 'MOVE' ? .075 : .055;
-  const drag = Math.pow(.82, dt);
+  const spring = state.mode === 'MOVE' ? .105 : .082;
+  const drag = Math.pow(state.mode === 'MOVE' ? .79 : .805, dt);
 
+  const previousHeartX = state.heartX;
+  const previousHeartY = state.heartY;
   state.heartX += (state.targetX - state.heartX) * Math.min(1, .22 * dt);
   state.heartY += (state.targetY - state.heartY) * Math.min(1, .22 * dt);
+  const centerDeltaX = state.heartX - previousHeartX;
+  const centerDeltaY = state.heartY - previousHeartY;
+  state.heartVelocityX = lerp(state.heartVelocityX, centerDeltaX / Math.max(.3, dt), .18);
+  state.heartVelocityY = lerp(state.heartVelocityY, centerDeltaY / Math.max(.3, dt), .18);
+  const currentEnergy = Math.hypot(state.heartVelocityX, state.heartVelocityY);
+  state.movementEnergy = lerp(state.movementEnergy, clamp(currentEnergy / 7, 0, 1), .12);
 
   ctx.globalCompositeOperation = 'lighter';
   for (let index = 0; index < state.particles.length; index++) {
     const particle = state.particles[index];
-    const localX = particle.hx * scale;
-    const localZ = particle.hz * scale * .35;
+    // Each point follows the hand at a slightly different rate. The uneven
+    // carry is what makes the heart feel fluid instead of like one rigid decal.
+    const moving = state.mode === 'MOVE';
+    const carry = moving ? .34 + particle.lag * .5 : .94;
+    particle.x += centerDeltaX * carry;
+    particle.y += centerDeltaY * carry;
+    particle.x = state.heartX + (particle.x - state.heartX) * particleScaleRatioX;
+    particle.y = state.heartY + (particle.y - state.heartY) * particleScaleRatioY;
+
+    if (moving) {
+      const wake = (.055 + Math.abs(particle.hz) * .105) * (.72 + particle.seed * .56);
+      particle.vx -= centerDeltaX * wake;
+      particle.vy -= centerDeltaY * wake;
+    }
+
+    const localX = particle.hx * scaleX;
+    const localY = particle.hy * scaleY;
+    const localZ = particle.hz * scaleX * .35;
     const rotatedX = localX * cos + localZ * sin;
     const depth = -localX * sin + localZ * cos;
     const perspective = 360 / Math.max(280, 360 - depth);
-    const targetX = state.heartX + rotatedX * perspective;
-    const targetY = state.heartY + particle.hy * scale * perspective;
+    const baseLength = Math.max(.05, Math.hypot(particle.hx, particle.hy));
+    const radialX = particle.hx / baseLength;
+    const radialY = particle.hy / baseLength;
+    const tangentX = -radialY * particle.orbitDirection;
+    const tangentY = radialX * particle.orbitDirection;
 
-    particle.vx += (targetX - particle.x) * spring * dt;
-    particle.vy += (targetY - particle.y) * spring * dt;
-    particle.vx *= drag;
-    particle.vy *= drag;
+    // A delayed beat travels through the cloud, so neighbouring particles do
+    // not contract at exactly the same instant.
+    const particleBeat = heartbeatWave(
+      now - particle.seed * (fastBeat ? 78 : 135) - Math.abs(particle.hz) * 36,
+      fastBeat
+    );
+    const beatDelta = particleBeat - particle.lastBeat;
+    particle.lastBeat = particleBeat;
+    const beatRipple = particleBeat * state.heartScale * (fastBeat ? .042 : .009) * motionAmount;
+    const breathRipple = breath * state.heartScale * .007 * (.55 + particle.seed * .55) * motionAmount;
+
+    const flowPhase = now * .0017 * particle.flow + particle.phase + particle.hz * 1.8;
+    const orbit = Math.sin(flowPhase) + Math.sin(flowPhase * .47 + particle.seed * 5.2) * .34;
+    const flowStrength = ((fastBeat ? 2.8 : 2.05) + state.movementEnergy * 3.5) * motionAmount;
+    const shimmerX = Math.cos(now * .00105 * particle.twinkle + particle.phase) * .9 * motionAmount;
+    const shimmerY = Math.sin(now * .00122 * particle.twinkle - particle.phase) * .72 * motionAmount;
+
+    const speedLength = Math.max(.001, Math.hypot(state.heartVelocityX, state.heartVelocityY));
+    const motionNormalX = -state.heartVelocityY / speedLength;
+    const motionNormalY = state.heartVelocityX / speedLength;
+    const sideFlow = Math.sin(now * .003 + particle.phase * 1.7) * state.movementEnergy * (1.8 + Math.abs(particle.hz) * 3.4);
+
+    const livingX = tangentX * orbit * flowStrength
+      + radialX * (beatRipple + breathRipple)
+      + motionNormalX * sideFlow
+      + shimmerX;
+    const livingY = tangentY * orbit * flowStrength
+      + radialY * (beatRipple + breathRipple)
+      + motionNormalY * sideFlow
+      + shimmerY;
+    const targetX = state.heartX + rotatedX * perspective + livingX;
+    const targetY = state.heartY + localY * perspective + livingY;
+
+    const particleSpring = spring * (.82 + particle.lag * .4);
+    const particleDrag = Math.pow(drag, .84 + particle.seed * .3);
+    particle.vx += (targetX - particle.x) * particleSpring * dt;
+    particle.vy += (targetY - particle.y) * particleSpring * dt;
+    particle.vx += radialX * beatDelta * (fastBeat ? 1.45 : .24) * motionAmount;
+    particle.vy += radialY * beatDelta * (fastBeat ? 1.45 : .24) * motionAmount;
+    particle.vx *= particleDrag;
+    particle.vy *= particleDrag;
     particle.x += particle.vx * dt;
     particle.y += particle.vy * dt;
 
-    drawParticle(particle, now, perspective, .94);
+    const depthTrail = state.mode === 'MOVE'
+      ? (.2 + Math.abs(particle.hz) * .42) * (1 - particle.seed * .28)
+      : 0;
+    const renderX = particle.x - state.heartVelocityX * depthTrail;
+    const renderY = particle.y - state.heartVelocityY * depthTrail;
+    const expansion = Math.max(0, beat);
+    const contraction = Math.max(0, -beat);
+    const intensity = .88 + expansion * (fastBeat ? .9 : .18) + contraction * .24 + (breath + 1) * .03;
+    const sizeBoost = 1
+      + expansion * (fastBeat ? .24 : .045)
+      + contraction * .06
+      + state.movementEnergy * .065
+      + Math.abs(particleBeat - beat) * (fastBeat ? .055 : .018);
+
+    drawParticle(particle, now, perspective, intensity, renderX, renderY, sizeBoost);
   }
+
+  state.particleScaleX = nextScaleX;
+  state.particleScaleY = nextScaleY;
 }
 
 function drawExplosion(now, dt) {
@@ -305,15 +421,100 @@ function drawMessage(now, dt) {
     }
     particle.x += particle.vx * dt;
     particle.y += particle.vy * dt;
-    const groupIntensity = particle.messageGroup === 'pig' ? 1.42 : 1.28;
-    drawParticle(particle, now, 1, particle.textParticle ? groupIntensity : .26);
+    const groupIntensity = particle.messageGroup === 'pig' ? 1.5 : .26;
+    drawParticle(
+      particle,
+      now,
+      1,
+      particle.textParticle ? groupIntensity : .26,
+      particle.x,
+      particle.y,
+      particle.textParticle ? 1.1 : 1
+    );
   }
+
+  drawFinalTitle(now);
+
+  if (elapsed >= HOME_ENTRY_DELAY) enterHome();
 }
 
-function drawParticle(particle, now, perspective, intensity) {
+function enterHome() {
+  if (state.homeTransitionStarted) return;
+  state.homeTransitionStarted = true;
+  statusNode.textContent = '正在进入网站';
+  window.location.assign('home.html');
+}
+
+function getMessageLayout() {
+  const compact = state.width < 700;
+  const pigRadius = Math.min(
+    state.width * (compact ? .2325 : .1425),
+    state.height * (compact ? .135 : .2025)
+  );
+  return {
+    compact,
+    pigRadius,
+    pigX: state.width / 2,
+    pigY: state.height * (compact ? .34 : .37),
+    textX: state.width / 2,
+    smallSize: Math.floor(Math.min(state.height * .041, state.width * (compact ? .064 : .03))),
+    titleSize: Math.floor(Math.min(state.height * (compact ? .05 : .065), state.width / (compact ? 8.7 : 16))),
+    smallY: state.height * (compact ? .49 : .59),
+    titleY: state.height * (compact ? .58 : .69)
+  };
+}
+
+function drawFinalTitle(now) {
+  const elapsed = now - state.messageAt;
+  const smallProgress = SYSTEM_REDUCED ? 1 : clamp((elapsed - 360) / 900, 0, 1);
+  const titleProgress = SYSTEM_REDUCED ? 1 : clamp((elapsed - 520) / 1100, 0, 1);
+  const smallReveal = 1 - Math.pow(1 - smallProgress, 3);
+  const titleReveal = 1 - Math.pow(1 - titleProgress, 3);
+  if (smallReveal <= 0 && titleReveal <= 0) return;
+
+  const layout = getMessageLayout();
+  const smallY = layout.smallY + (1 - smallReveal) * 8;
+  const titleY = layout.titleY + (1 - titleReveal) * 10;
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.translate(layout.textX, smallY);
+  ctx.transform(1, 0, -.075, 1, 0, 0);
+  ctx.font = `italic 500 ${layout.smallSize}px "STXingkai", "华文行楷", "STKaiti", "KaiTi", "KaiTi_GB2312", serif`;
+  ctx.fillStyle = `rgba(175, 184, 190, ${smallReveal * .88})`;
+  ctx.strokeStyle = `rgba(229, 234, 237, ${smallReveal * .12})`;
+  ctx.lineWidth = Math.max(.7, layout.smallSize * .021);
+  ctx.shadowColor = `rgba(98, 108, 116, ${smallReveal * .24})`;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 3;
+  ctx.shadowBlur = 5;
+  drawSpacedText(ctx, '小猪', 0, 0, layout.smallSize * .22, 'both');
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.translate(layout.textX, titleY);
+  ctx.transform(1, 0, -.095, 1, 0, 0);
+  ctx.font = `italic 600 ${layout.titleSize}px "STXingkai", "华文行楷", "STKaiti", "KaiTi", "KaiTi_GB2312", serif`;
+  ctx.fillStyle = `rgba(211, 218, 222, ${titleReveal * .95})`;
+  ctx.strokeStyle = `rgba(239, 242, 244, ${titleReveal * .14})`;
+  ctx.lineWidth = Math.max(.9, layout.titleSize * .021);
+  ctx.shadowColor = `rgba(91, 102, 110, ${titleReveal * .28})`;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 4;
+  ctx.shadowBlur = 7;
+  drawSpacedText(ctx, '欢迎回家', 0, 0, layout.titleSize * .08, 'both');
+  ctx.restore();
+}
+
+function drawParticle(particle, now, perspective, intensity, drawX = particle.x, drawY = particle.y, sizeBoost = 1) {
   const shimmer = .72 + Math.sin(now * .0017 * particle.twinkle + particle.phase) * .22;
   const alpha = clamp(particle.alpha * shimmer * intensity, .08, 1);
-  const size = Math.max(.65, particle.size * perspective * (intensity > 1 ? 1.12 : 1));
+  const size = Math.max(.65, particle.size * perspective * (intensity > 1 ? 1.12 : 1) * sizeBoost);
 
   if (particle.tone === 0) ctx.fillStyle = `rgba(183, 191, 197, ${alpha})`;
   else if (particle.tone === 1) ctx.fillStyle = `rgba(222, 227, 230, ${alpha})`;
@@ -321,10 +522,10 @@ function drawParticle(particle, now, perspective, intensity) {
 
   if (size > 1.35) {
     ctx.beginPath();
-    ctx.arc(particle.x, particle.y, size, 0, TAU);
+    ctx.arc(drawX, drawY, size, 0, TAU);
     ctx.fill();
   } else {
-    ctx.fillRect(particle.x, particle.y, size, size);
+    ctx.fillRect(drawX, drawY, size, size);
   }
 }
 
@@ -332,9 +533,14 @@ function frame(now) {
   const dt = Math.min(1.8, (now - state.lastFrameAt) / 16.667 || 1);
   state.lastFrameAt = now;
   ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = state.mode === 'FIRE' || state.mode === 'MESSAGE'
-    ? 'rgba(2, 3, 4, .13)'
-    : 'rgba(2, 3, 4, .38)';
+  const fadeAlpha = state.mode === 'FIRE' || state.mode === 'MESSAGE'
+    ? .13
+    : state.mode === 'GUN'
+      ? .72
+      : state.mode === 'MOVE'
+        ? .48
+        : .42;
+  ctx.fillStyle = `rgba(2, 3, 4, ${fadeAlpha})`;
   ctx.fillRect(0, 0, state.width, state.height);
 
   if (state.mode === 'FIRE') drawExplosion(now, dt);
@@ -403,13 +609,15 @@ function classifyHand(landmarks) {
   const otherThreeCurled = curledCount >= 2;
   const openPalm = index.extended && middle.extended && ring.extended && pinky.extended;
   const pointing = index.extended && otherThreeCurled && !thumbExtended;
-  const gun = index.extended && otherThreeCurled && thumbExtended && !middle.extended;
+  const gunShape = index.extended && otherThreeCurled && !middle.extended;
+  const gun = gunShape && thumbExtended;
 
   return {
     gesture: gun ? 'GUN' : 'MOVE',
     openPalm,
     pointing,
     gun,
+    gunShape,
     thumbExtended,
     thumbFolded,
     thumbRatio,
@@ -424,17 +632,22 @@ function updateGesture(landmarks, now) {
   state.handSeenAt = now;
   const palmY = (landmarks[0].y + landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 5;
 
-  if (pose.gun) {
+  const gunLockGrace = state.gunArmed && pose.gunShape && now - state.gunLastSeenAt <= GUN_LOCK_GRACE;
+  const gunActive = pose.gun || gunLockGrace;
+
+  if (gunActive) {
     if (state.gestureCandidate !== 'GUN') {
       state.gestureCandidate = 'GUN';
       state.candidateSince = now;
       state.gunFrames = 0;
       state.gunMotion = [];
     }
-    state.gunFrames++;
-    state.gunLastSeenAt = now;
+    if (pose.gun) {
+      state.gunFrames++;
+      state.gunLastSeenAt = now;
+    }
 
-    if (now - state.candidateSince >= 180 && !state.gunArmed) {
+    if (pose.gun && now - state.candidateSince >= 160 && !state.gunArmed) {
       state.gunArmed = true;
       state.gunArmedAt = now;
       state.lockedX = state.heartX;
@@ -455,7 +668,7 @@ function updateGesture(landmarks, now) {
       mapHandToScreen(landmarks);
     }
 
-    if (state.gunArmed && now > state.gunArmedAt + 180 && now > state.shotCooldownUntil) {
+    if (pose.gun && state.gunArmed && now > state.gunArmedAt + 180 && now > state.shotCooldownUntil) {
       const baseline = state.gunMotion.find(sample => now - sample.time >= 160) || state.gunMotion[0];
       const elapsedSeconds = Math.max(.08, (now - baseline.time) / 1000);
       const upwardTravel = baseline.y - palmY;
@@ -469,20 +682,13 @@ function updateGesture(landmarks, now) {
   } else {
     state.gestureCandidate = 'MOVE';
     state.candidateSince = now;
-    if (state.gunArmed && now - state.gunLastSeenAt <= 220) {
-      state.mode = 'GUN';
-      state.gesture = 'GUN';
-      state.targetX = state.lockedX;
-      state.targetY = state.lockedY;
-    } else {
-      state.gunFrames = 0;
-      state.gunArmed = false;
-      state.gunMotion = [];
-      state.liftProgress = 0;
-      state.mode = 'MOVE';
-      state.gesture = 'MOVE';
-      mapHandToScreen(landmarks);
-    }
+    state.gunFrames = 0;
+    state.gunArmed = false;
+    state.gunMotion = [];
+    state.liftProgress = 0;
+    state.mode = 'MOVE';
+    state.gesture = 'MOVE';
+    mapHandToScreen(landmarks);
   }
 
   updateDebug(pose);
@@ -531,12 +737,14 @@ function beginExplosion(now = performance.now()) {
   updateDebug();
 }
 
-function drawSpacedText(context, text, centerX, y, spacing) {
+function drawSpacedText(context, text, centerX, y, spacing, renderMode = 'fill') {
   const widths = [...text].map(character => context.measureText(character).width);
   const totalWidth = widths.reduce((sum, width) => sum + width, 0) + spacing * Math.max(0, text.length - 1);
   let cursor = centerX - totalWidth / 2;
   [...text].forEach((character, index) => {
-    context.fillText(character, cursor + widths[index] / 2, y);
+    const x = cursor + widths[index] / 2;
+    if (renderMode === 'stroke' || renderMode === 'both') context.strokeText(character, x, y);
+    if (renderMode === 'fill' || renderMode === 'both') context.fillText(character, x, y);
     cursor += widths[index] + spacing;
   });
 }
@@ -545,7 +753,7 @@ function drawPigMark(context, centerX, centerY, radius) {
   context.save();
   context.strokeStyle = '#f3f5f6';
   context.fillStyle = '#f3f5f6';
-  context.lineWidth = Math.max(5, radius * .095);
+  context.lineWidth = Math.max(4, radius * .055);
   context.lineCap = 'round';
   context.lineJoin = 'round';
 
@@ -587,27 +795,16 @@ function buildMessageTargets() {
   textCtx.textAlign = 'center';
   textCtx.textBaseline = 'middle';
 
-  const compact = state.width < 700;
-  const pigRadius = Math.min(state.width * (compact ? .12 : .082), state.height * .135);
-  const pigY = state.height * (compact ? .27 : .29);
-  drawPigMark(textCtx, state.width / 2, pigY, pigRadius);
-
-  const smallSize = Math.floor(Math.min(state.height * .045, state.width * .055));
-  textCtx.font = `400 ${smallSize}px "FangSong", "STFangsong", "Songti SC", "SimSun", serif`;
-  textCtx.globalAlpha = .8;
-  drawSpacedText(textCtx, '小猪', state.width / 2, state.height * .49, smallSize * .78);
-
-  const mainSize = Math.floor(Math.min(state.height * .115, state.width / (compact ? 5.7 : 7.1)));
-  textCtx.font = `500 ${mainSize}px "FangSong", "STFangsong", "Songti SC", "SimSun", serif`;
-  textCtx.globalAlpha = 1;
-  drawSpacedText(textCtx, '欢迎回家', state.width / 2, state.height * .63, mainSize * .18);
+  const layout = getMessageLayout();
+  drawPigMark(textCtx, layout.pigX, layout.pigY, layout.pigRadius);
 
   const pixels = textCtx.getImageData(0, 0, state.width, state.height).data;
   const step = state.width < 700 ? 4 : 5;
   const points = [];
   for (let y = 0; y < state.height; y += step) {
     for (let x = 0; x < state.width; x += step) {
-      if (pixels[(y * state.width + x) * 4 + 3] > 90) points.push({ x, y });
+      if (pixels[(y * state.width + x) * 4 + 3] <= 90) continue;
+      points.push({ x, y, group: 'pig' });
     }
   }
 
@@ -616,7 +813,7 @@ function buildMessageTargets() {
     [points[index], points[target]] = [points[target], points[index]];
   }
 
-  const textCount = Math.floor(state.particles.length * .96);
+  const textCount = Math.floor(state.particles.length * .72);
   state.messageTargets = points;
   for (let index = 0; index < state.particles.length; index++) {
     const particle = state.particles[index];
@@ -625,7 +822,7 @@ function buildMessageTargets() {
       const point = points[index % points.length];
       particle.tx = point.x + (Math.random() - .5) * 1.8;
       particle.ty = point.y + (Math.random() - .5) * 1.8;
-      particle.messageGroup = point.y < state.height * .43 ? 'pig' : 'text';
+      particle.messageGroup = point.group;
     } else {
       particle.messageGroup = 'ambient';
     }
@@ -635,14 +832,10 @@ function buildMessageTargets() {
 function enterMessage(now) {
   state.mode = 'MESSAGE';
   state.messageAt = now;
+  state.homeTransitionStarted = false;
   buildMessageTargets();
   statusNode.textContent = '小猪欢迎回家';
   updateDebug();
-  // 粒子聚合为"小猪 欢迎回家"后再停留片刻，自动进入主站
-  clearTimeout(state.enterTimer);
-  state.enterTimer = setTimeout(() => {
-    window.location.href = 'home.html';
-  }, 5600);
 }
 
 function updateDebug(pose) {
@@ -659,7 +852,8 @@ function updateDebug(pose) {
 }
 
 function resetLostHand(now = performance.now()) {
-  if (now - state.handSeenAt <= 320) return;
+  const lossGrace = state.gunArmed ? 720 : 360;
+  if (now - state.handSeenAt <= lossGrace) return;
   state.gesture = 'NONE';
   state.gestureCandidate = 'NONE';
   state.candidateFrames = 0;
@@ -721,7 +915,6 @@ async function initializeRecognition() {
 async function startCamera() {
   if (!window.isSecureContext) {
     statusNode.textContent = '请通过 HTTPS 或 localhost 打开页面';
-    activateLabel.textContent = '需 HTTPS 访问才能体感';
     activateButton.hidden = false;
     return;
   }
@@ -861,7 +1054,6 @@ addEventListener('beforeunload', () => {
   cancelAnimationFrame(state.raf);
   clearTimeout(state.detectionTimer);
   clearTimeout(state.reducedTimer);
-  clearTimeout(state.enterTimer);
 });
 
 resize();

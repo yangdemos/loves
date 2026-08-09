@@ -119,16 +119,21 @@ document.addEventListener('DOMContentLoaded', function() {
     lazyImages.forEach(img => imageObserver.observe(img));
   }
 
-  // --- Letter Typewriter Effect ---
+  // --- Letter: envelope opens into a full letter view ---
+  // 情书内容仍来自 LOVE_DATA.letter（一字不改）；信封封面 -> 点击 -> 全屏信纸，
+  // 信纸内按章节/段落依次浮现，保证长文可读性。
   const letterBody = document.getElementById('letter-body');
   const letterDate = document.getElementById('letter-date');
-  if (letterBody && letterDate && LOVE_DATA.letter) {
-    letterDate.textContent = LOVE_DATA.meetDate;
+  const envelopeOpen = document.getElementById('envelope-open');
+  const letterPage = document.getElementById('letter-page');
+  const letterBackdrop = document.getElementById('letter-page-backdrop');
+  const letterClose = document.getElementById('letter-sheet-close');
+  const letterCloseBottom = document.getElementById('letter-sheet-close-bottom');
 
+  if (letterBody && letterPage && LOVE_DATA.letter) {
     // Parse each letter line into tokens: {tag: 'heading'|'chapter'|'para', segs:[{text,bold}]}
     // "## " prefix marks a chapter title; "**text**" marks bold emphasis (from letter.docx Strong style).
     const tokens = [];
-    let totalChars = 0;
     LOVE_DATA.letter.forEach(function(line, idx) {
       let tag = 'para';
       let text = line;
@@ -142,52 +147,71 @@ document.addEventListener('DOMContentLoaded', function() {
       text.split('**').forEach(function(part, i) {
         if (!part) return;
         segs.push({ text: part, bold: (i % 2 === 1) });
-        totalChars += part.length;
       });
       if (segs.length) tokens.push({ tag: tag, segs: segs });
     });
 
-    // Render the first `shown` characters as HTML, closing tags per token.
-    function renderLetter(shown) {
+    // Render the full letter once; paragraphs fade in one by one for readability.
+    function renderLetter() {
       let html = '';
-      let left = shown;
-      for (let ti = 0; ti < tokens.length && left > 0; ti++) {
-        const tok = tokens[ti];
+      tokens.forEach(function(tok) {
         let inner = '';
-        for (let si = 0; si < tok.segs.length && left > 0; si++) {
-          const seg = tok.segs[si];
-          const take = Math.min(seg.text.length, left);
-          const piece = seg.text.slice(0, take);
-          inner += seg.bold ? '<strong>' + piece + '</strong>' : piece;
-          left -= take;
-        }
-        if (tok.tag === 'heading') html += '<div class="letter-heading">' + inner + '</div>';
-        else if (tok.tag === 'chapter') html += '<div class="letter-chapter">' + inner + '</div>';
-        else html += '<p>' + inner + '</p>';
-      }
+        tok.segs.forEach(function(seg) {
+          inner += seg.bold ? '<strong>' + seg.text + '</strong>' : seg.text;
+        });
+        const cls = tok.tag === 'heading' ? 'letter-heading'
+                  : tok.tag === 'chapter' ? 'letter-chapter' : '';
+        html += cls ? '<div class="' + cls + '">' + inner + '</div>'
+                    : '<p>' + inner + '</p>';
+      });
       letterBody.innerHTML = html;
-      letterBody.scrollTop = letterBody.scrollHeight;
+
+      // Staggered reveal: each block fades up in sequence.
+      const blocks = letterBody.children;
+      Array.prototype.forEach.call(blocks, function(block, i) {
+        block.classList.add('letter-reveal');
+        block.style.transitionDelay = (i * 0.09) + 's';
+      });
+      // Force reflow so the transition delay takes effect.
+      void letterBody.offsetWidth;
+      Array.prototype.forEach.call(blocks, function(block) {
+        block.classList.add('is-visible');
+      });
     }
 
-    const letterObserver = new IntersectionObserver(function(entries) {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          letterObserver.unobserve(entry.target);
-          letterBody.innerHTML = '';
-          let shown = 0;
-          const typeInterval = setInterval(function() {
-            if (shown < totalChars) {
-              shown = Math.min(totalChars, shown + 3);
-              renderLetter(shown);
-            } else {
-              clearInterval(typeInterval);
-            }
-          }, 16);
-        }
-      });
-    }, { threshold: 0.3 });
+    function openLetter() {
+      if (envelopeOpen) envelopeOpen.classList.add('is-opening');
+      // Wait for the flap animation, then reveal the letter page.
+      window.setTimeout(function() {
+        letterPage.classList.add('is-open');
+        letterPage.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (letterBody.innerHTML === '') renderLetter();
+      }, 550);
+    }
 
-    letterObserver.observe(letterBody);
+    function closeLetter() {
+      letterPage.classList.remove('is-open');
+      letterPage.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      if (envelopeOpen) {
+        envelopeOpen.classList.remove('is-opening');
+        // Small pause so the envelope "settles" back after the letter closes.
+        window.setTimeout(function() {
+          envelopeOpen.classList.add('is-settled');
+          window.setTimeout(function() { envelopeOpen.classList.remove('is-settled'); }, 400);
+        }, 180);
+      }
+    }
+
+    if (letterDate) letterDate.textContent = LOVE_DATA.meetDate;
+    if (envelopeOpen) envelopeOpen.addEventListener('click', openLetter);
+    if (letterClose) letterClose.addEventListener('click', closeLetter);
+    if (letterCloseBottom) letterCloseBottom.addEventListener('click', closeLetter);
+    if (letterBackdrop) letterBackdrop.addEventListener('click', closeLetter);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && letterPage.classList.contains('is-open')) closeLetter();
+    });
   }
 
   // --- 3D Round Carousel (always auto-rotating + drag momentum) ---

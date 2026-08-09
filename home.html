@@ -145,19 +145,27 @@
                 <p class="section-desc">来自心底的话语</p>
             </div>
             <div class="letter-card">
-                <div class="letter-envelope">
-                    <div class="letter-paper">
-                        <div class="letter-header">
-                            <span>我最亲爱的，</span>
-                            <span class="letter-date" id="letter-date"></span>
-                        </div>
-                        <div class="letter-body" id="letter-body"></div>
-                        <div class="letter-signature">
-                            <span>永远属于你，</span>
-                            <span class="signature-name">&#10084; 你的灵魂伴侣</span>
-                        </div>
-                    </div>
-                </div>
+                <a class="envelope-open" id="envelope-open" href="letter.html" aria-label="打开情书，进入信纸页面">
+                    <span class="envelope">
+                        <span class="envelope-flap"></span>
+                        <span class="envelope-paper-peek"></span>
+                        <span class="envelope-body">
+                            <span class="envelope-stamp">
+                                <span class="stamp-inner">&#10084;</span>
+                            </span>
+                            <span class="envelope-address">
+                                <span class="addr-to">致：我最亲爱的</span>
+                                <span class="addr-ornament">&#10022;</span>
+                                <span class="addr-from">寄自：永远属于你的他</span>
+                            </span>
+                            <span class="envelope-seal">
+                                <span class="seal-heart">&#10084;</span>
+                            </span>
+                        </span>
+                    </span>
+                    <span class="envelope-hint">轻触开启 · 一封写给你的信</span>
+                </a>
+                <p class="letter-card-copy">把很长很长的话，先收进信封里。等光线安静一点，再慢慢读。</p>
             </div>
         </div>
     </section>
@@ -384,10 +392,12 @@
 
     <!-- Local scripts -->
     <script src="js/data.js"></script>
+    <script src="js/letter-page.js"></script>
     <script src="js/globe.js"></script>
     <script src="js/main.js"></script>
     <script src="js/video-maker.js"></script>
     <script src="js/reminder.js"></script>
+    <script src="js/bgm.js"></script>
 
     <!-- Random rotating subtitle: same title lines fixed big & bold, only the love-line below swaps -->
     <script>

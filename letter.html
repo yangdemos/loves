@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>一封情书</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="letter-standalone-page">
+
+    <div class="letter-progress-bar" aria-hidden="true">
+        <span class="letter-progress-fill" id="letter-progress-fill"></span>
+    </div>
+
+    <main class="letter-page-shell">
+        <section class="letter-page-hero">
+            <div class="letter-hero-copy">
+                <span class="letter-hero-kicker">Love Letter</span>
+                <h1 class="letter-hero-title">纸张终于归纸张，长信也该慢慢读。</h1>
+                <p class="letter-hero-desc">信封留在主页，真正的信纸放到这里。原文一字不改，只把阅读节奏和段落呼吸整理干净。</p>
+            </div>
+            <a href="home.html#letter" class="story-back letter-return">回到信封</a>
+        </section>
+
+        <section class="letter-reading-layout">
+            <aside class="letter-outline-card" aria-label="情书章节索引">
+                <div class="letter-outline-head">
+                    <span class="letter-outline-kicker">章节索引</span>
+                    <p class="letter-outline-desc">这一封信很长，但不该读得狼狈。</p>
+                </div>
+                <div class="letter-outline" id="letter-outline"></div>
+                <div class="letter-outline-footnote" id="letter-read-status">慢一点读，字句会自己排好队。</div>
+            </aside>
+
+            <article class="letter-sheet letter-sheet-standalone" aria-labelledby="letter-title">
+                <div class="letter-sheet-topbar">
+                    <span class="letter-sheet-kicker">Handwritten Memory</span>
+                    <a href="home.html#letter" class="letter-sheet-home-link">返回信封</a>
+                </div>
+                <div class="letter-sheet-inner">
+                    <h2 class="letter-title" id="letter-title">一封情书</h2>
+                    <div class="letter-sheet-meta">
+                        <span>原文完整保留</span>
+                        <span class="meta-sep">&#10022;</span>
+                        <span>按章节慢慢展开</span>
+                    </div>
+                    <div class="letter-sheet-paper">
+                        <div class="letter-body" id="letter-body"></div>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script src="js/data.js"></script>
+    <script src="js/letter-page.js"></script>
+</body>
+</html>
