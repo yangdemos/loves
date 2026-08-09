@@ -104,8 +104,7 @@
   .scroll-indicator span { font-size: 0.65rem; }
   .scroll-line { height: 28px; }
   #globe-canvas { height: 300px; }
-  .modal-photos-grid { grid-template-columns: 1fr; gap: 8px; }
-  .modal-photo-img { height: 200px; }
+  .modal-photos-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
 }
 
 /* --- Landscape phones --- */

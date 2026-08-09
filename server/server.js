@@ -10,11 +10,14 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 
 const apiRoutes = require('./routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HTTPS_PORT = process.env.HTTPS_PORT || 8443;
+const projectRoot = path.resolve(__dirname, '..');
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 
@@ -25,7 +28,6 @@ app.use(express.urlencoded({ extended: true }));
 // ─── Static files (frontend) ─────────────────────────────────────────────────
 
 // Serve the project root so index.html, css/, js/ etc. are accessible.
-const projectRoot = path.resolve(__dirname, '..');
 app.use(express.static(projectRoot));
 
 // ─── API routes ──────────────────────────────────────────────────────────────
@@ -53,29 +55,43 @@ app.use((err, _req, res, _next) => {
 
 // ─── Start ───────────────────────────────────────────────────────────────────
 
+// HTTP
 app.listen(PORT, () => {
   console.log(`Face-driven video server listening on http://localhost:${PORT}`);
-  console.log(`Static files served from: ${projectRoot}`);
+});
 
-  // Verify uploads/ and output/ directories
-  const dirs = [
-    path.join(projectRoot, 'uploads'),
-    path.join(projectRoot, 'output'),
-  ];
-  dirs.forEach((d) => {
-    if (!fs.existsSync(d)) {
-      fs.mkdirSync(d, { recursive: true });
-      console.log(`Created directory: ${d}`);
-    }
+// HTTPS (self-signed cert in project root)
+const certPath = path.join(projectRoot, 'cert.pem');
+const keyPath = path.join(projectRoot, 'key.pem');
+if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+  const httpsOptions = {
+    cert: fs.readFileSync(certPath),
+    key: fs.readFileSync(keyPath),
+  };
+  https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
+    console.log(`Face-driven video server (HTTPS) listening on https://localhost:${HTTPS_PORT}`);
   });
+} else {
+  console.warn(`WARNING: cert.pem/key.pem not found — HTTPS on port ${HTTPS_PORT} skipped.`);
+}
 
-  // Verify ffmpeg
-  try {
-    const { checkFfmpeg } = require('./utils/ffmpeg');
-    checkFfmpeg();
-    console.log('ffmpeg binaries found and ready.');
-  } catch (err) {
-    console.error('WARNING: ffmpeg check failed — video generation will not work.');
-    console.error(err.message);
+// Startup checks (uploads/output dirs + ffmpeg)
+const dirs = [
+  path.join(projectRoot, 'uploads'),
+  path.join(projectRoot, 'output'),
+];
+dirs.forEach((d) => {
+  if (!fs.existsSync(d)) {
+    fs.mkdirSync(d, { recursive: true });
+    console.log(`Created directory: ${d}`);
   }
 });
+
+try {
+  const { checkFfmpeg } = require('./utils/ffmpeg');
+  checkFfmpeg();
+  console.log('ffmpeg binaries found and ready.');
+} catch (err) {
+  console.error('WARNING: ffmpeg check failed — video generation will not work.');
+  console.error(err.message);
+}

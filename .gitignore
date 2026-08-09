@@ -55,3 +55,19 @@ test*.png
 # Orphaned git directories (empty artifacts)
 loves/
 UserslenovoDesktoplove_and_peace_repo/
+
+# HTTPS self-signed certs (local only, never publish private keys)
+*.pem
+
+# Verification screenshots (generated during QA)
+shot_*.png
+_shot_*.png
+
+# Design drafts & stray downloads
+sheji*.png
+下载.png
+
+# Scratch text / temp exports
+_extract_tmp.txt
+_letter_full.txt
+_test_*

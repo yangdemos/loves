@@ -218,9 +218,15 @@ function createStars() {
 }
 
 function setupInteraction(container) {
+    // Pointer position when a drag/click started — used to tell a real
+    // tap apart from a drag (a synthesized click fires after touchend/mouseup,
+    // so checking isDragging alone can't suppress drag-triggered clicks).
+    let pointerDown = null;
+
     container.addEventListener('mousedown', (e) => {
         isDragging = true;
         autoRotate = false;
+        pointerDown = { x: e.clientX, y: e.clientY };
         previousMousePosition = { x: e.clientX, y: e.clientY };
     });
 
@@ -242,39 +248,48 @@ function setupInteraction(container) {
         setTimeout(() => { if (!isDragging) autoRotate = true; }, 3000);
     });
 
-    // Click to detect location
+    // Click to detect location.
+    // Hit testing is done by projecting every marker onto the screen and
+    // picking the nearest one within a tap radius. A plain raycaster shoots
+    // straight through the globe, so a tap on empty ocean can open a city on
+    // the far side, and nearby cities overlap badly on small screens.
     container.addEventListener('click', (e) => {
+        // Suppress the click that follows an actual drag (mouse or touch).
+        if (pointerDown) {
+            const dx = e.clientX - pointerDown.x;
+            const dy = e.clientY - pointerDown.y;
+            pointerDown = null;
+            if (Math.sqrt(dx * dx + dy * dy) > 10) return;
+        }
         if (isDragging) return;
-        
+
         const rect = container.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2(x, y);
-        raycaster.setFromCamera(mouse, camera);
-        
-        // Collect all marker meshes
-        const meshes = [];
+        const tapScreen = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        // Tap radius scales with the globe size (min 28px so small markers stay tappable).
+        const threshold = Math.max(28, rect.width * 0.045);
+
+        let bestMarker = null;
+        let bestDist = Infinity;
+        const tmpPos = new THREE.Vector3();
+
         markersGroup.children.forEach(marker => {
-            marker.children.forEach(child => {
-                if (child.isMesh) {
-                    meshes.push({ mesh: child, parent: marker });
-                }
-            });
-        });
-        
-        const meshObjects = meshes.map(m => m.mesh);
-        const intersects = raycaster.intersectObjects(meshObjects);
-        
-        if (intersects.length > 0) {
-            const hitMesh = intersects[0].object;
-            const entry = meshes.find(m => m.mesh === hitMesh);
-            if (entry && entry.parent.userData.locationId) {
-                if (window.openLocationModal) {
-                    window.openLocationModal(entry.parent.userData.locationId);
-                }
+            // Skip markers on the far side of the globe.
+            const worldPos = marker.getWorldPosition(tmpPos);
+            const toCamera = new THREE.Vector3().subVectors(camera.position, worldPos).normalize();
+            if (worldPos.clone().normalize().dot(toCamera) < 0.1) return;
+
+            const projected = worldPos.clone().project(camera);
+            const sx = (projected.x + 1) / 2 * rect.width;
+            const sy = (1 - projected.y) / 2 * rect.height;
+            const dist = Math.hypot(sx - tapScreen.x, sy - tapScreen.y);
+            if (dist < threshold && dist < bestDist) {
+                bestDist = dist;
+                bestMarker = marker;
             }
+        });
+
+        if (bestMarker && bestMarker.userData.locationId && window.openLocationModal) {
+            window.openLocationModal(bestMarker.userData.locationId);
         }
     });
 
@@ -284,6 +299,7 @@ function setupInteraction(container) {
         const touch = e.touches[0];
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
+        pointerDown = { x: touch.clientX, y: touch.clientY };
         isDragging = true;
         autoRotate = false;
     });

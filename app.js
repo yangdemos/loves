@@ -721,6 +721,7 @@ async function initializeRecognition() {
 async function startCamera() {
   if (!window.isSecureContext) {
     statusNode.textContent = '请通过 HTTPS 或 localhost 打开页面';
+    activateLabel.textContent = '需 HTTPS 访问才能体感';
     activateButton.hidden = false;
     return;
   }

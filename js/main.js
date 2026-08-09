@@ -56,11 +56,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Intersection Observer for stats
   const statNumbers = document.querySelectorAll('.counter-value');
   if (statNumbers.length > 0) {
-    // Anniversary stats: compute days & months since 2024-10-21 (auto +1 daily)
+    // Anniversary stats: compute days & months since LOVE_DATA.startDate (auto +1 daily)
     const dayEl = document.querySelector('[data-anniversary="days"]');
     const monthEl = document.querySelector('[data-anniversary="months"]');
-    if (dayEl && monthEl) {
-      const start = new Date(2024, 9, 21); // 2024-10-21
+    if (dayEl && monthEl && LOVE_DATA && LOVE_DATA.startDate) {
+      const start = new Date(LOVE_DATA.startDate.getTime());
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       start.setHours(0, 0, 0, 0);
@@ -123,25 +123,66 @@ document.addEventListener('DOMContentLoaded', function() {
   const letterBody = document.getElementById('letter-body');
   const letterDate = document.getElementById('letter-date');
   if (letterBody && letterDate && LOVE_DATA.letter) {
-    const fullText = LOVE_DATA.letter.join('\n\n');
     letterDate.textContent = LOVE_DATA.meetDate;
+
+    // Parse each letter line into tokens: {tag: 'heading'|'chapter'|'para', segs:[{text,bold}]}
+    // "## " prefix marks a chapter title; "**text**" marks bold emphasis (from letter.docx Strong style).
+    const tokens = [];
+    let totalChars = 0;
+    LOVE_DATA.letter.forEach(function(line, idx) {
+      let tag = 'para';
+      let text = line;
+      if (idx === 0) {
+        tag = 'heading';
+      } else if (line.indexOf('## ') === 0) {
+        tag = 'chapter';
+        text = line.slice(3);
+      }
+      const segs = [];
+      text.split('**').forEach(function(part, i) {
+        if (!part) return;
+        segs.push({ text: part, bold: (i % 2 === 1) });
+        totalChars += part.length;
+      });
+      if (segs.length) tokens.push({ tag: tag, segs: segs });
+    });
+
+    // Render the first `shown` characters as HTML, closing tags per token.
+    function renderLetter(shown) {
+      let html = '';
+      let left = shown;
+      for (let ti = 0; ti < tokens.length && left > 0; ti++) {
+        const tok = tokens[ti];
+        let inner = '';
+        for (let si = 0; si < tok.segs.length && left > 0; si++) {
+          const seg = tok.segs[si];
+          const take = Math.min(seg.text.length, left);
+          const piece = seg.text.slice(0, take);
+          inner += seg.bold ? '<strong>' + piece + '</strong>' : piece;
+          left -= take;
+        }
+        if (tok.tag === 'heading') html += '<div class="letter-heading">' + inner + '</div>';
+        else if (tok.tag === 'chapter') html += '<div class="letter-chapter">' + inner + '</div>';
+        else html += '<p>' + inner + '</p>';
+      }
+      letterBody.innerHTML = html;
+      letterBody.scrollTop = letterBody.scrollHeight;
+    }
 
     const letterObserver = new IntersectionObserver(function(entries) {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           letterObserver.unobserve(entry.target);
-          letterBody.textContent = '';
-          let charIndex = 0;
+          letterBody.innerHTML = '';
+          let shown = 0;
           const typeInterval = setInterval(function() {
-            if (charIndex < fullText.length) {
-              letterBody.textContent += fullText[charIndex];
-              charIndex++;
-              // Auto-scroll the letter body as text fills
-              letterBody.scrollTop = letterBody.scrollHeight;
+            if (shown < totalChars) {
+              shown = Math.min(totalChars, shown + 3);
+              renderLetter(shown);
             } else {
               clearInterval(typeInterval);
             }
-          }, 30);
+          }, 16);
         }
       });
     }, { threshold: 0.3 });
@@ -188,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
       slide.dataset.index = i;
 
       const img = document.createElement("img");
-      img.src = item.src;
+      img.src = thumbUrl(item.src);
       img.alt = '相册照片 ' + (i + 1);
 
       slide.appendChild(img);
@@ -709,6 +750,15 @@ document.addEventListener('DOMContentLoaded', function() {
   const modalLocationTitle = document.getElementById('modal-location-title');
   const modalPhotosGrid = document.getElementById('modal-photos-grid');
 
+  // Map a full-size photo path to its generated thumbnail (thumbs/ are ~1000px JPEGs)
+  function thumbUrl(src) {
+    if (src.indexOf('assets/photos/') !== 0) return src; // remote hero images stay as-is
+    if (src.indexOf('/heroes/') !== -1) return src;      // hero banners keep original
+    return src
+      .replace('assets/photos/', 'assets/photos/thumbs/')
+      .replace(/\.(png|jpe?g)$/i, '.jpg');
+  }
+
   function openLocationModal(locationId) {
     const loc = LOVE_DATA.locations.find(function(l) { return l.id === locationId; });
     if (!loc) return;
@@ -731,7 +781,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const photoImg = document.createElement('img');
         photoImg.className = 'modal-photo-img';
-        photoImg.src = photoUrl;
+        photoImg.src = thumbUrl(photoUrl);
         photoImg.loading = 'lazy';
         photoImg.alt = loc.name;
 

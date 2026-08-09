@@ -569,6 +569,23 @@ input, textarea { font-family: inherit; }
   max-width: 580px;
   margin: 0 auto;
 }
+.story-more {
+  display: inline-block;
+  margin-top: 28px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--primary);
+  border: 1px solid rgba(184,74,90,0.35);
+  padding: 10px 30px;
+  border-radius: 40px;
+  transition: all 0.3s ease;
+}
+.story-more:hover {
+  background: rgba(184,74,90,0.1);
+  border-color: var(--primary);
+}
 
 /* ========================
    LOVE LETTER SECTION
@@ -630,7 +647,7 @@ input, textarea { font-family: inherit; }
 .letter-body p {
   margin-bottom: 18px;
 }
-.letter-body p:first-child:first-letter {
+.letter-body p:first-of-type:first-letter {
   font-size: 3.2em;
   float: left;
   line-height: 1;
@@ -640,6 +657,31 @@ input, textarea { font-family: inherit; }
   font-family: var(--font-heading);
   font-weight: 700;
   text-shadow: 0 2px 20px rgba(232,89,110,0.3);
+}
+/* Letter heading / chapter titles and bold emphasis (from letter.docx) */
+.letter-body .letter-heading {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 26px;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 20px rgba(232,89,110,0.35);
+}
+.letter-body .letter-chapter {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 30px 0 12px;
+  letter-spacing: 2px;
+  padding-left: 14px;
+  border-left: 3px solid var(--primary);
+}
+.letter-body strong {
+  color: var(--primary);
+  font-weight: 700;
 }
 .letter-body .cursor {
   display: inline-block;
