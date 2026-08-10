@@ -33,7 +33,7 @@
                 <a href="#letter" class="nav-link">情书</a>
                 <a href="#globe" class="nav-link">世界地图</a>
                 <a href="#gallery" class="nav-link">相册</a>
-                <a href="#video-maker" class="nav-link">视频</a>
+                <a href="#video-maker" class="nav-link">许愿瓶</a>
             </div>
             <button class="nav-toggle" aria-label="Menu">
                 <span></span>
@@ -223,121 +223,158 @@
         </div>
     </section>
 
-    <!-- ===== VIDEO MAKER SECTION ===== -->
-    <section id="video-maker" class="section video-maker-section">
+    <!-- ===== WISH BOTTLE SECTION ===== -->
+    <section id="video-maker" class="section wish-section">
         <div class="section-bg"></div>
         <div class="container">
             <div class="section-header light">
                 <span class="section-number">05</span>
-                <h2 class="section-title">制作视频</h2>
+                <h2 class="section-title">许愿瓶</h2>
                 <div class="section-divider"></div>
-                <p class="section-desc">将你的照片变成电影般的爱情故事</p>
+                <p class="section-desc">把还没实现的心愿装进深色玻璃瓶里。每一颗来回跳动的星光，都是正在发亮的以后。</p>
             </div>
 
-            <div class="vm-container">
-                <!-- Upload Area -->
-                <div class="vm-card vm-upload-card" id="vm-upload-card">
-                    <div class="vm-upload-zone" id="vm-upload-zone">
-                        <div class="vm-upload-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
+            <div class="wish-shell">
+                <div class="wish-column wish-column-form">
+                    <div class="wish-card wish-compose-card">
+                        <div class="wish-card-head">
+                            <span class="wish-kicker">Wish Composer</span>
+                            <h3 class="wish-card-title">把愿望轻轻放进瓶子里</h3>
+                            <p class="wish-card-copy">成熟一点的交互不靠花里胡哨，靠信息顺手、情绪稳定、每一步都像在认真对待这段关系。</p>
                         </div>
-                        <h3 class="vm-upload-title">上传照片</h3>
-                        <p class="vm-upload-text">拖拽照片到此处，或点击浏览</p>
-                        <input type="file" id="vm-file-input" accept="image/*" multiple hidden />
-                        <button class="vm-btn vm-btn-outline" id="vm-browse-btn">选择照片</button>
-                        <div class="vm-upload-hint">支持 JPG、PNG、WEBP 格式，最多 20 张</div>
-                    </div>
-                    <div class="vm-upload-loading" id="vm-upload-loading">
-                        <div class="vm-loader-ring"></div>
-                        <span>正在上传...</span>
-                    </div>
-                    <div class="vm-thumbs-container" id="vm-thumbs-container">
-                        <div class="vm-thumbs-header">
-                            <span class="vm-thumbs-count" id="vm-thumbs-count">已选择 0 张照片</span>
-                            <button class="vm-btn-link" id="vm-clear-btn">全部清除</button>
+
+                        <div class="wish-owner-tabs" id="wish-owner-tabs" aria-label="选择许愿人">
+                            <button class="wish-owner-chip is-active" type="button" data-owner="我">我</button>
+                            <button class="wish-owner-chip" type="button" data-owner="你">你</button>
+                            <button class="wish-owner-chip" type="button" data-owner="我们">我们</button>
                         </div>
-                        <div class="vm-thumbs-grid" id="vm-thumbs-grid"></div>
+
+                        <form class="wish-form" id="wish-form">
+                            <label class="wish-field">
+                                <span class="wish-field-label">愿望标题</span>
+                                <input id="wish-title-input" name="wishTitle" type="text" maxlength="36" placeholder="比如：一起去冰岛看极光" required />
+                            </label>
+
+                            <label class="wish-field wish-field-large">
+                                <span class="wish-field-label">愿望内容</span>
+                                <textarea id="wish-text-input" name="wishText" rows="5" maxlength="280" placeholder="写下现在最想实现的愿望，也写下它为什么重要。" required></textarea>
+                            </label>
+
+                            <div class="wish-progress-builder">
+                                <div class="wish-progress-head">
+                                    <span class="wish-field-label">实现进度</span>
+                                    <span class="wish-progress-value" id="wish-progress-value">0%</span>
+                                </div>
+                                <input id="wish-progress-input" class="wish-range" type="range" min="0" max="100" step="5" value="0" />
+                                <div class="wish-range-labels">
+                                    <span>刚写下</span>
+                                    <span>快实现了</span>
+                                </div>
+                                <div class="wish-stage-preview">
+                                    <span class="wish-stage-pill" id="wish-stage-pill">刚刚放进瓶里</span>
+                                    <p class="wish-stage-copy" id="wish-stage-copy">先把它认真记下来，之后它才会慢慢靠近现实。</p>
+                                </div>
+                            </div>
+
+                            <button class="wish-btn wish-btn-primary" id="wish-submit-btn" type="submit">
+                                <span>投入许愿瓶</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14M12 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="wish-card wish-list-card">
+                        <div class="wish-list-head">
+                            <div>
+                                <span class="wish-kicker">Wish Ledger</span>
+                                <h3 class="wish-card-title">瓶中愿望</h3>
+                            </div>
+                            <span class="wish-count-badge" id="wish-count-badge">0 个愿望</span>
+                        </div>
+                        <div class="wish-stats" id="wish-stats"></div>
+                        <div class="wish-list" id="wish-list"></div>
                     </div>
                 </div>
 
-                <!-- Settings Panel -->
-                <div class="vm-card vm-settings-card">
-                    <h3 class="vm-settings-title">视频设置</h3>
+                <div class="wish-column wish-column-bottle">
+                    <div class="wish-card wish-bottle-card">
+                        <div class="wish-bottle-copyblock">
+                            <span class="wish-kicker">Starlit Bottle</span>
+                            <h3 class="wish-card-title">每写下一个愿望，瓶里就多一颗会跳动的星光。</h3>
+                            <p class="wish-card-copy">点开星光，会进入愿望详情页。里面放着愿望本身，也放着它正在被实现到哪一步。</p>
+                        </div>
 
-                    <div class="vm-setting-group">
-                        <label class="vm-setting-label">
-                            <span>过渡时长</span>
-                            <span class="vm-setting-value" id="vm-transition-value">2s</span>
-                        </label>
-                        <input type="range" class="vm-range" id="vm-transition-slider"
-                               min="1" max="4" step="0.5" value="2" />
-                        <div class="vm-range-labels">
-                            <span>1s</span>
-                            <span>4s</span>
+                        <div class="wish-bottle-stage">
+                            <div class="wish-bottle-glow"></div>
+                            <div class="wish-bottle-halo wish-bottle-halo-left"></div>
+                            <div class="wish-bottle-halo wish-bottle-halo-right"></div>
+                            <div class="wish-bottle">
+                                <div class="wish-bottle-shadow"></div>
+                                <div class="wish-bottle-cork"></div>
+                                <div class="wish-bottle-neck">
+                                    <div class="wish-bottle-lip"></div>
+                                    <div class="wish-bottle-neck-inner"></div>
+                                </div>
+                                <div class="wish-bottle-body">
+                                    <div class="wish-bottle-inner-shell"></div>
+                                    <div class="wish-bottle-ridge wish-bottle-ridge-left"></div>
+                                    <div class="wish-bottle-ridge wish-bottle-ridge-right"></div>
+                                    <div class="wish-bottle-highlight wish-bottle-highlight-main"></div>
+                                    <div class="wish-bottle-highlight wish-bottle-highlight-secondary"></div>
+                                    <div class="wish-bottle-highlight wish-bottle-highlight-side"></div>
+                                    <div class="wish-bottle-caustic"></div>
+                                    <div class="wish-bottle-field" id="wish-bottle-field" aria-label="许愿瓶中的愿望星光">
+                                        <div class="wish-bottle-empty" id="wish-bottle-empty">把第一个愿望投进去，瓶子才会亮起来。</div>
+                                    </div>
+                                    <div class="wish-bottle-bottom-lens"></div>
+                                </div>
+                                <div class="wish-bottle-base"></div>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="vm-setting-group">
-                        <label class="vm-setting-label">
-                            <span>每张照片时长</span>
-                            <span class="vm-setting-value" id="vm-duration-value">5s</span>
-                        </label>
-                        <input type="range" class="vm-range" id="vm-duration-slider"
-                               min="3" max="8" step="1" value="5" />
-                        <div class="vm-range-labels">
-                            <span>3s</span>
-                            <span>8s</span>
-                        </div>
-                    </div>
-
-                    <button class="vm-btn vm-btn-primary" id="vm-generate-btn" disabled>
-                        <span class="vm-btn-text">生成视频</span>
-                        <svg class="vm-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Progress Section -->
-                <div class="vm-card vm-progress-card" id="vm-progress-card" style="display:none;">
-                    <h3 class="vm-progress-title">正在制作视频</h3>
-                    <div class="vm-progress-bar-track">
-                        <div class="vm-progress-bar-fill" id="vm-progress-fill"></div>
-                    </div>
-                    <p class="vm-progress-status" id="vm-progress-status">正在启动...</p>
-                </div>
-
-                <!-- Result Section -->
-                <div class="vm-card vm-result-card" id="vm-result-card" style="display:none;">
-                    <h3 class="vm-result-title">视频已准备就绪</h3>
-                    <div class="vm-video-wrapper">
-                        <video id="vm-video-player" controls playsinline></video>
-                    </div>
-                    <div class="vm-result-actions">
-                        <a class="vm-btn vm-btn-primary" id="vm-download-btn" download>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                            下载视频
-                        </a>
-                        <button class="vm-btn vm-btn-outline" id="vm-start-over-btn">重新开始</button>
-                    </div>
-                </div>
-
-                <!-- Error toast -->
-                <div class="vm-error-toast" id="vm-error-toast">
-                    <span id="vm-error-msg"></span>
-                    <button class="vm-error-close" id="vm-error-close">&times;</button>
                 </div>
             </div>
         </div>
     </section>
+
+    <div class="wish-detail-modal" id="wish-detail-modal" aria-hidden="true">
+        <div class="wish-detail-backdrop" data-wish-close="true"></div>
+        <div class="wish-detail-panel" role="dialog" aria-modal="true" aria-labelledby="wish-detail-title">
+            <button class="wish-detail-close" id="wish-detail-close" type="button" aria-label="关闭愿望详情">&times;</button>
+            <div class="wish-detail-headset" aria-hidden="true">
+                <span class="wish-detail-band"></span>
+                <span class="wish-detail-ear wish-detail-ear-left"></span>
+                <span class="wish-detail-ear wish-detail-ear-right"></span>
+            </div>
+            <span class="wish-detail-kicker" id="wish-detail-owner">我们的愿望</span>
+            <h3 class="wish-detail-title" id="wish-detail-title"></h3>
+            <p class="wish-detail-text" id="wish-detail-text"></p>
+
+            <div class="wish-detail-progress-block">
+                <div class="wish-detail-progress-head">
+                    <span>实现进度</span>
+                    <span id="wish-detail-progress-value">0%</span>
+                </div>
+                <div class="wish-detail-progress-track">
+                    <span id="wish-detail-progress-fill"></span>
+                </div>
+                <input id="wish-detail-progress-input" class="wish-range" type="range" min="0" max="100" step="5" value="0" />
+                <div class="wish-stage-preview wish-stage-preview-detail">
+                    <span class="wish-stage-pill" id="wish-detail-stage-pill">刚刚放进瓶里</span>
+                    <p class="wish-stage-copy" id="wish-detail-stage-copy">先把它认真记下来，之后它才会慢慢靠近现实。</p>
+                </div>
+            </div>
+
+            <div class="wish-detail-actions">
+                <button class="wish-btn wish-btn-secondary" id="wish-detail-save" type="button">保存进度</button>
+                <button class="wish-btn wish-btn-danger" id="wish-detail-delete" type="button">删除愿望</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="wish-toast" id="wish-toast" aria-live="polite"></div>
 
     <!-- ===== FOOTER ===== -->
     <footer class="footer">
