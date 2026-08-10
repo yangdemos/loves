@@ -12,6 +12,9 @@
 
 const SW_VERSION = '1.0.0';
 const CACHE_NAME = `love-reminder-sw-v${SW_VERSION}`;
+const DEFAULT_HOME_URL = new URL('./home.html', self.registration.scope).toString();
+const DEFAULT_ICON_URL = new URL('./images/icon-192.png', self.registration.scope).toString();
+const DEFAULT_BADGE_URL = new URL('./images/icon-96.png', self.registration.scope).toString();
 
 self.addEventListener('install', (event) => {
   // Take control of all clients immediately (no need to wait for reload)
@@ -37,8 +40,8 @@ self.addEventListener('message', (event) => {
 
   self.registration.showNotification(title || 'Love & Peace', {
     body: body || '',
-    icon: icon || '/images/icon-192.png',
-    badge: '/images/icon-96.png',
+    icon: icon || DEFAULT_ICON_URL,
+    badge: DEFAULT_BADGE_URL,
     tag: tag || 'love-reminder',
     requireInteraction: requireInteraction !== false,  // keep notification visible until user acts
     silent: silent === true,
@@ -53,7 +56,7 @@ self.addEventListener('message', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url || '/home.html';
+  const targetUrl = event.notification.data?.url || DEFAULT_HOME_URL;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

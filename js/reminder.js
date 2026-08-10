@@ -38,6 +38,10 @@
   let checkIntervalId = null;
   let todayCheckDone = false;
 
+  function resolveSiteUrl(relativePath) {
+    return new URL(relativePath, window.location.href).toString();
+  }
+
   // DOM refs (populated on init)
   let toastContainer = null;
 
@@ -128,8 +132,8 @@
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/',
+      const registration = await navigator.serviceWorker.register('./sw.js', {
+        scope: './',
       });
       console.log('[Reminder] SW registered:', registration.scope);
       
@@ -153,7 +157,7 @@
         title,
         body,
         tag: opts.tag || 'love-reminder',
-        icon: opts.icon || '/images/icon-192.png',
+        icon: opts.icon || resolveSiteUrl('./images/icon-192.png'),
         requireInteraction: opts.requireInteraction !== false,
         silent: opts.silent || false,
         data: opts.data || {},
@@ -176,7 +180,7 @@
       try {
         const n = new Notification(title, {
           body: body || '',
-          icon: opts.icon || '/images/icon-192.png',
+          icon: opts.icon || resolveSiteUrl('./images/icon-192.png'),
           tag: opts.tag || 'love-reminder',
           requireInteraction: opts.requireInteraction !== false,
           silent: opts.silent || false,
@@ -316,7 +320,7 @@
       notify(
         '❤️ 今天的爱情提醒',
         `从 2024.10.21 开始，已经在一起 ${days} 天，相爱 ${months} 个月了。今天也继续相爱吧！`,
-        { tag: 'daily-reminder', icon: '/images/icon-192.png' }
+        { tag: 'daily-reminder', icon: resolveSiteUrl('./images/icon-192.png'), data: { url: resolveSiteUrl('./home.html') } }
       );
 
       console.log(`[Reminder] Daily reminder fired for ${today}`);
@@ -343,13 +347,13 @@
         notify(
           '🎉 纪念日快乐！',
           `今天是我们在一起 ${yearsTogether} 周年！已经一起走过 ${totalDays} 天了。爱你！`,
-          { tag: 'anniversary', requireInteraction: true }
+          { tag: 'anniversary', requireInteraction: true, data: { url: resolveSiteUrl('./home.html') } }
         );
       } else {
         notify(
           '💝 纪念日倒计时',
           `距离我们在一起 ${yearsTogether} 周年还有 ${daysUntil} 天。已经开始期待了！`,
-          { tag: 'anniversary-countdown', requireInteraction: false }
+          { tag: 'anniversary-countdown', requireInteraction: false, data: { url: resolveSiteUrl('./home.html') } }
         );
       }
     }
@@ -441,8 +445,8 @@
     const picked = memories[Math.floor(Math.random() * memories.length)];
     notify(picked.title, picked.body, {
       tag: 'random-memory',
-      icon: '/images/icon-192.png',
-      data: picked.data,
+      icon: resolveSiteUrl('./images/icon-192.png'),
+      data: { ...picked.data, url: resolveSiteUrl('./home.html') },
     });
   }
 
