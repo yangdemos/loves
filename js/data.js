@@ -4,8 +4,8 @@
 
 const LOVE_DATA = {
     // Relationship dates (adjust these!)
-    startDate: new Date('2024-01-15'),
-    meetDate: '2024.01.15',
+    startDate: new Date('2024-10-21T00:00:00'),
+    meetDate: '2024.10.21',
 
     // Love letter content (typewriter effect)
     // 每一项为一段；## 开头为小节标题，**包裹为加粗强调（来自 letter.docx 的 Strong 字符样式）
@@ -429,14 +429,23 @@ const LOVE_DATA = {
 };
 
 // Calculate time since start date
-function calculateTimeTogether() {
-    const now = new Date();
-    const start = LOVE_DATA.startDate;
-    const diff = now - start;
+function calculateTimeTogether(baseDate) {
+    const now = baseDate ? new Date(baseDate) : new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const start = new Date(
+        LOVE_DATA.startDate.getFullYear(),
+        LOVE_DATA.startDate.getMonth(),
+        LOVE_DATA.startDate.getDate()
+    );
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const months = Math.floor(days / 30);
-    const years = Math.floor(days / 365);
+    const diff = Math.max(0, today.getTime() - start.getTime());
+    const days = Math.floor(diff / 86400000);
+
+    let months = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+    if (today.getDate() < start.getDate()) months -= 1;
+    months = Math.max(0, months);
+
+    const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
 
     return { days, months, years, remainingMonths };

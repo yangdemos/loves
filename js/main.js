@@ -59,21 +59,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // Anniversary stats: compute days & months since LOVE_DATA.startDate (auto +1 daily)
     const dayEl = document.querySelector('[data-anniversary="days"]');
     const monthEl = document.querySelector('[data-anniversary="months"]');
-    if (dayEl && monthEl && LOVE_DATA && LOVE_DATA.startDate) {
-      const start = new Date(LOVE_DATA.startDate.getTime());
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      start.setHours(0, 0, 0, 0);
-      const days = Math.round((today - start) / 86400000);
-      let months = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
-      if (today.getDate() < start.getDate()) months--;
-      dayEl.setAttribute('data-target', days);
-      monthEl.setAttribute('data-target', months);
-    }
     let statsAnimated = false;
+
+    function getAnniversaryStats() {
+      if (typeof window.calculateTimeTogether === 'function') {
+        return window.calculateTimeTogether();
+      }
+      return null;
+    }
+
+    function renderAnniversaryStats() {
+      if (!dayEl || !monthEl || !LOVE_DATA || !LOVE_DATA.startDate) return;
+      const stats = getAnniversaryStats();
+      if (!stats) return;
+
+      dayEl.setAttribute('data-target', stats.days);
+      monthEl.setAttribute('data-target', stats.months);
+
+      if (statsAnimated) {
+        dayEl.textContent = stats.days + '+';
+        monthEl.textContent = stats.months + '+';
+      }
+    }
+
+    function scheduleAnniversaryRefresh() {
+      const now = new Date();
+      const nextTick = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1, 0);
+      const delay = Math.max(1000, nextTick.getTime() - now.getTime());
+
+      window.setTimeout(function() {
+        renderAnniversaryStats();
+        scheduleAnniversaryRefresh();
+      }, delay);
+    }
+
+    renderAnniversaryStats();
+    scheduleAnniversaryRefresh();
+
     const observer = new IntersectionObserver(function(entries) {
       entries.forEach(entry => {
         if (entry.isIntersecting && !statsAnimated) {
+          renderAnniversaryStats();
           statsAnimated = true;
           statNumbers.forEach(el => {
             const target = parseInt(el.getAttribute('data-target'));

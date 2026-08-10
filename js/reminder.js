@@ -311,10 +311,11 @@
 
       const calc = window.calculateTimeTogether ? window.calculateTimeTogether() : null;
       const days = calc ? calc.days : daysBetween(LOVE_DATA.startDate, now);
+      const months = calc ? calc.months : 0;
 
       notify(
         '❤️ 今天的爱情提醒',
-        `已经在一起 ${days} 天了。每一秒都因为有你而变得特别。今天也继续相爱吧！`,
+        `从 2024.10.21 开始，已经在一起 ${days} 天，相爱 ${months} 个月了。今天也继续相爱吧！`,
         { tag: 'daily-reminder', icon: '/images/icon-192.png' }
       );
 
@@ -341,13 +342,13 @@
       if (daysUntil === 0) {
         notify(
           '🎉 纪念日快乐！',
-          `今天是我们相识 ${yearsTogether} 周年！在一起的 ${totalDays} 天，每一个都是最美的礼物。爱你！`,
+          `今天是我们在一起 ${yearsTogether} 周年！已经一起走过 ${totalDays} 天了。爱你！`,
           { tag: 'anniversary', requireInteraction: true }
         );
       } else {
         notify(
           '💝 纪念日倒计时',
-          `距离我们相识 ${yearsTogether} 周年还有 ${daysUntil} 天。已经开始期待了！`,
+          `距离我们在一起 ${yearsTogether} 周年还有 ${daysUntil} 天。已经开始期待了！`,
           { tag: 'anniversary-countdown', requireInteraction: false }
         );
       }
