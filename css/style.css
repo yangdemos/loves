@@ -1960,6 +1960,7 @@ input, textarea { font-family: inherit; }
   line-height: 1.9;
   color: rgba(255,255,255,0.8);
   margin-bottom: 24px;
+  white-space: pre-line;
 }
 .modal-photos-title {
   font-family: var(--font-heading);
