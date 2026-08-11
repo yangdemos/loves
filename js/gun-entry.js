@@ -425,7 +425,7 @@ function handleHand(lm) {
                 swingDir = null;
             }
 
-            if (lastPalmPos.y - cy > 0.006 && lastPalmPos.y - cy > Math.abs(cx - lastPalmPos.x) * 0.8) {
+            if (lastPalmPos.y - cy > 0.004 && lastPalmPos.y - cy > Math.abs(cx - lastPalmPos.x) * 0.35) {
                 liftUpFrames++;
             } else if (cy - lastPalmPos.y > 0.004) {
                 liftUpFrames = Math.max(0, liftUpFrames - 1);
@@ -436,11 +436,11 @@ function handleHand(lm) {
             const horizontalTravel = Math.abs(cx - gunBaseX);
             const upwardSpeed = upwardTravel / elapsedSeconds;
             if (
-                performance.now() - gunSince > 220 &&
-                upwardTravel > 0.13 &&
-                upwardSpeed > 0.22 &&
-                upwardTravel > horizontalTravel * 1.15 &&
-                liftUpFrames >= 2
+                performance.now() - gunSince > 110 &&
+                upwardTravel > 0.06 &&
+                upwardSpeed > 0.09 &&
+                upwardTravel > horizontalTravel * 0.45 &&
+                liftUpFrames >= 1
             ) {
                 fire();
                 return;

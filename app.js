@@ -13,12 +13,12 @@ const TAU = Math.PI * 2;
 const SYSTEM_REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HOME_URL = 'home.html?v=6e5c981&cinematicMotion=force';
-const GUN_LOCK_GRACE = 420;
-const GUN_ARM_FRAMES = 4;
-const GUN_ARM_TIME = 240;
-const SHOT_MIN_LIFT = .125;
-const SHOT_MIN_SPEED = .22;
-const SHOT_VERTICAL_DOMINANCE = 1.15;
+const GUN_LOCK_GRACE = 560;
+const GUN_ARM_FRAMES = 2;
+const GUN_ARM_TIME = 120;
+const SHOT_MIN_LIFT = .055;
+const SHOT_MIN_SPEED = .09;
+const SHOT_VERTICAL_DOMINANCE = .45;
 const HOME_ENTRY_DELAY = SYSTEM_REDUCED ? 1800 : 3400;
 const LABELS = {
   IDLE: '等待手势',
@@ -168,9 +168,9 @@ function makeParticle(index) {
 
 function particleCount() {
   const shortSide = Math.min(state.width, state.height);
-  if (shortSide < 520) return 2100;
-  if ((navigator.deviceMemory || 4) <= 2) return 2350;
-  return 3200;
+  if (shortSide < 520) return 1250;
+  if ((navigator.deviceMemory || 4) <= 2) return 1450;
+  return 2400;
 }
 
 function computeScale() {
@@ -690,25 +690,33 @@ function updateGesture(landmarks, now) {
       if (previous && previous.y - palm.y > .006) state.liftUpFrames++;
       else if (previous && palm.y - previous.y > .004) state.liftUpFrames = Math.max(0, state.liftUpFrames - 1);
       state.gunMotion.push({ x: palm.x, y: palm.y, time: now });
-      state.gunMotion = state.gunMotion.filter(sample => now - sample.time <= 850);
+      state.gunMotion = state.gunMotion.filter(sample => now - sample.time <= 620);
     } else {
       state.mode = 'MOVE';
       state.gesture = 'MOVE';
       mapHandToScreen(landmarks);
     }
 
-    if (pose.gun && state.gunArmed && now > state.gunArmedAt + 220 && now > state.shotCooldownUntil) {
-      const elapsedSeconds = Math.max(.12, (now - state.gunArmedAt) / 1000);
-      const upwardTravel = state.gunBaseY - palm.y;
-      const horizontalTravel = Math.abs(palm.x - state.gunBaseX);
-      const upwardSpeed = upwardTravel / elapsedSeconds;
-      const verticalDominant = upwardTravel > horizontalTravel * SHOT_VERTICAL_DOMINANCE;
-      state.liftProgress = clamp(upwardTravel / SHOT_MIN_LIFT, 0, 1);
+    if (pose.gun && state.gunArmed && now > state.gunArmedAt + 110 && now > state.shotCooldownUntil) {
+      const recentBase = state.gunMotion.reduce(function (lowest, sample) {
+        return sample.y > lowest.y ? sample : lowest;
+      }, state.gunMotion[0] || { x: state.gunBaseX, y: state.gunBaseY, time: state.gunArmedAt });
+      const recentLift = recentBase.y - palm.y;
+      const recentHorizontal = Math.abs(palm.x - recentBase.x);
+      const recentSeconds = Math.max(.08, (now - recentBase.time) / 1000);
+      const recentSpeed = recentLift / recentSeconds;
+      const armedLift = state.gunBaseY - palm.y;
+      const armedHorizontal = Math.abs(palm.x - state.gunBaseX);
+      const triggerLift = Math.max(recentLift, armedLift);
+      const triggerHorizontal = recentLift >= armedLift ? recentHorizontal : armedHorizontal;
+      const triggerSpeed = Math.max(recentSpeed, armedLift / Math.max(.1, (now - state.gunArmedAt) / 1000));
+      const verticalDominant = triggerLift > triggerHorizontal * SHOT_VERTICAL_DOMINANCE;
+      state.liftProgress = clamp(triggerLift / SHOT_MIN_LIFT, 0, 1);
       if (
-        upwardTravel > SHOT_MIN_LIFT
-        && upwardSpeed > SHOT_MIN_SPEED
+        triggerLift > SHOT_MIN_LIFT
+        && triggerSpeed > SHOT_MIN_SPEED
         && verticalDominant
-        && state.liftUpFrames >= 2
+        && state.liftUpFrames >= 1
       ) {
         beginExplosion(now);
         return;
@@ -970,8 +978,8 @@ async function startCamera() {
       audio: false,
       video: {
         facingMode: 'user',
-        width: { ideal: 424, max: 640 },
-        height: { ideal: 320, max: 480 },
+        width: { ideal: 360, max: 480 },
+        height: { ideal: 270, max: 360 },
         frameRate: { ideal: 24, max: 30 }
       }
     });
@@ -1026,7 +1034,7 @@ async function detectHands() {
   const now = performance.now();
   const hasNewFrame = state.video.readyState >= 2 && state.video.currentTime !== state.lastVideoTime;
   let inferenceTime = 0;
-  if (hasNewFrame && now - state.lastDetectionAt >= 48) {
+  if (hasNewFrame && now - state.lastDetectionAt >= 34) {
     state.lastVideoTime = state.video.currentTime;
     state.lastDetectionAt = now;
     try {
@@ -1043,7 +1051,7 @@ async function detectHands() {
     }
   }
 
-  const nextDelay = clamp(32 + inferenceTime * .8, 46, 110);
+  const nextDelay = clamp(18 + inferenceTime * .6, 30, 82);
   state.detectionTimer = setTimeout(detectHands, nextDelay);
 }
 
