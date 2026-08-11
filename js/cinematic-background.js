@@ -4,6 +4,7 @@
   var root = document.getElementById('cinematic-background');
   var canvas = document.getElementById('cinematic-canvas');
   var particleCanvas = document.getElementById('cinematic-particles');
+  var video = document.getElementById('bg-video');
   if (!root || !canvas || !particleCanvas) return;
 
   var searchParams = new URLSearchParams(window.location.search);
@@ -11,6 +12,8 @@
   if (searchParams.get('cinematicMotion') === 'force') reducedMotion = false;
   if (searchParams.get('cinematicMotion') === 'reduce') reducedMotion = true;
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var coarsePointer = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(hover: none)').matches;
+  var preferVideoMode = coarsePointer && !reducedMotion && searchParams.get('cinematicMode') !== 'canvas';
   var lowPower = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 4;
   var sceneDuration = 16000;
   var transitionDuration = lowPower ? 2100 : 2700;
@@ -34,7 +37,54 @@
     { name: '\u84dd\u591c\u5ce1\u6e7e', src: 'images/cinematic/fjord-night.webp', transition: 0, brightness: .10, duration: 23500, dark: true }
   ];
   root.dataset.ready = 'loading';
+  root.dataset.renderMode = 'canvas';
   root.style.backgroundImage = 'url("' + scenes[0].src + '")';
+
+  function requestVideoPlayback() {
+    if (!video) return;
+    var playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(function () {});
+    }
+  }
+
+  function setRenderMode(mode) {
+    root.dataset.renderMode = mode;
+  }
+
+  if (video) {
+    video.muted = true;
+    video.defaultMuted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', 'true');
+
+    video.addEventListener('loadeddata', function () {
+      if (preferVideoMode) setRenderMode('video');
+      requestVideoPlayback();
+    }, { passive: true });
+    video.addEventListener('canplay', function () {
+      if (preferVideoMode) setRenderMode('video');
+      requestVideoPlayback();
+    }, { passive: true });
+    video.addEventListener('ended', function () {
+      video.currentTime = 0;
+      requestVideoPlayback();
+    });
+    video.addEventListener('error', function () {
+      setRenderMode('canvas');
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && root.dataset.renderMode === 'video') requestVideoPlayback();
+    });
+    window.addEventListener('pageshow', function () {
+      if (root.dataset.renderMode === 'video') requestVideoPlayback();
+    }, { passive: true });
+
+    if (preferVideoMode) setRenderMode('video');
+  }
 
   var contextOptions = {
     alpha: false,
