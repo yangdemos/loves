@@ -20,27 +20,50 @@
     transitionDuration = 1800;
   }
 
+  // Luminous South Island horizons descend into a four-scene blue-hour/night hold.
   var scenes = [
-    { name: '雪山云海', src: 'images/cinematic/mountain-clouds.webp', transition: 0 },
-    { name: '月夜海洋', src: 'images/cinematic/moon-ocean.webp', transition: 1 },
-    { name: '极光湖', src: 'images/cinematic/aurora-lake.webp', transition: 2 },
-    { name: '梦幻森林', src: 'images/cinematic/dream-forest.webp', transition: 3 }
+    { name: '\u5357\u5c9b\u60ac\u5d16\u6d77\u5cb8', src: 'images/cinematic/south-island-cliff-day.webp', transition: 0, brightness: 1.00, duration: 14000 },
+    { name: '\u963f\u5c14\u5351\u65af\u6e56', src: 'images/cinematic/alpine-lake-day.webp', transition: 2, brightness: .94, duration: 14000 },
+    { name: '\u96ea\u5c71\u4e91\u6d77', src: 'images/cinematic/mountain-clouds.webp', transition: 2, brightness: .84, duration: 14500 },
+    { name: '\u65b0\u897f\u5170\u96e8\u6797', src: 'images/cinematic/lush-rainforest.webp', transition: 3, brightness: .74, duration: 15000 },
+    { name: '\u60ac\u5d16\u84dd\u8c03\u9ec4\u660f', src: 'images/cinematic/south-island-cliff-dusk.webp', transition: 1, brightness: .56, duration: 16500 },
+    { name: '\u68a6\u5e7b\u68ee\u6797', src: 'images/cinematic/dream-forest.webp', transition: 3, brightness: .43, duration: 17000 },
+    { name: '\u6708\u591c\u6d77\u6d0b', src: 'images/cinematic/moon-ocean.webp', transition: 1, brightness: .29, duration: 20500, dark: true },
+    { name: '\u6781\u5149\u6e56', src: 'images/cinematic/aurora-lake.webp', transition: 2, brightness: .23, duration: 21500, dark: true },
+    { name: '\u6708\u4e0b\u96e8\u6797', src: 'images/cinematic/rainforest-night.webp', transition: 3, brightness: .15, duration: 22500, dark: true },
+    { name: '\u84dd\u591c\u5ce1\u6e7e', src: 'images/cinematic/fjord-night.webp', transition: 0, brightness: .10, duration: 23500, dark: true }
   ];
+  root.dataset.ready = 'loading';
+  root.style.backgroundImage = 'url("' + scenes[0].src + '")';
 
-  var gl = canvas.getContext('webgl', {
+  var contextOptions = {
     alpha: false,
     antialias: false,
     depth: false,
     stencil: false,
     preserveDrawingBuffer: reducedMotion,
     powerPreference: lowPower ? 'low-power' : 'high-performance'
-  });
+  };
+  var gl = null;
+  try {
+    gl = canvas.getContext('webgl', contextOptions) || canvas.getContext('experimental-webgl', contextOptions);
+  } catch (contextError) {
+    console.warn('[CinematicBackground] WebGL context unavailable:', contextError);
+  }
 
   if (!gl) {
     root.classList.add('is-fallback');
+    root.dataset.ready = 'fallback';
     exposeApi(null);
     return;
   }
+  root.dataset.renderer = String(gl.getParameter(gl.RENDERER) || 'webgl');
+  canvas.addEventListener('webglcontextlost', function (event) {
+    event.preventDefault();
+    root.classList.remove('is-ready');
+    root.classList.add('is-fallback');
+    root.dataset.ready = 'context-lost';
+  }, false);
 
   var vertexSource = [
     'attribute vec2 aPosition;',
@@ -63,6 +86,8 @@
     'uniform float uProgress;',
     'uniform float uTime;',
     'uniform float uMode;',
+    'uniform float uBrightness;',
+    'uniform float uDarkness;',
     '',
     'float hash(vec2 p) {',
     '  p = fract(p * vec2(123.34, 456.21));',
@@ -153,6 +178,8 @@
     '  float mistNoise = fbm(vec2(uv.x * 3.0 + uTime * .012, uv.y * 4.8 - uTime * .006));',
     '  float mistBand = smoothstep(.42, .94, mistNoise) * (1.0 - smoothstep(.2, .88, uv.y)) * .09;',
     '  color = mix(color, vec3(.34, .43, .54), mistBand + fogFlash);',
+    '  color *= mix(.84, 1.06, clamp(uBrightness, 0.0, 1.0));',
+    '  color *= 1.0 - uDarkness * (0.22 + 0.25 * pulse);',
     '  float vignette = smoothstep(.94, .28, length((uv - .5) * vec2(1.06, .92)));',
     '  color *= mix(.56, .88, vignette);',
     '  color += (hash(gl_FragCoord.xy + uTime * 47.0) - .5) * .018;',
@@ -211,7 +238,9 @@
     pointer: gl.getUniformLocation(program, 'uPointer'),
     progress: gl.getUniformLocation(program, 'uProgress'),
     time: gl.getUniformLocation(program, 'uTime'),
-    mode: gl.getUniformLocation(program, 'uMode')
+    mode: gl.getUniformLocation(program, 'uMode'),
+    brightness: gl.getUniformLocation(program, 'uBrightness'),
+    darkness: gl.getUniformLocation(program, 'uDarkness')
   };
   gl.uniform1i(uniforms.current, 0);
   gl.uniform1i(uniforms.next, 1);
@@ -232,16 +261,31 @@
     return new Promise(function (resolve, reject) {
       var image = new Image();
       image.decoding = 'async';
+      image.crossOrigin = 'anonymous';
       image.onload = function () {
-        var texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-        resolve({ texture: texture, width: image.naturalWidth, height: image.naturalHeight });
+        var upload = function () {
+          try {
+            var texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            var textureError = gl.getError();
+            if (textureError !== gl.NO_ERROR) throw new Error('Texture upload error ' + textureError);
+            resolve({ texture: texture, width: image.naturalWidth, height: image.naturalHeight });
+          } catch (error) {
+            reject(error);
+          }
+        };
+        if (typeof image.decode === 'function') {
+          image.decode().then(upload).catch(upload);
+        } else {
+          upload();
+        }
       };
       image.onerror = function () { reject(new Error('Unable to load ' + scene.src)); };
       image.src = scene.src;
@@ -340,6 +384,10 @@
     gl.uniform1f(uniforms.progress, progress);
     gl.uniform1f(uniforms.time, now * .001);
     gl.uniform1f(uniforms.mode, scenes[nextIndex].transition);
+    var currentBrightness = scenes[currentIndex].brightness || .8;
+    var nextBrightness = scenes[nextIndex].brightness || currentBrightness;
+    gl.uniform1f(uniforms.brightness, currentBrightness + (nextBrightness - currentBrightness) * progress);
+    gl.uniform1f(uniforms.darkness, Math.max(0, currentBrightness - nextBrightness));
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
@@ -348,7 +396,7 @@
     nextIndex = (currentIndex + 1) % scenes.length;
     isTransitioning = false;
     lastSceneAt = now;
-    root.style.setProperty('--cinematic-fallback', "url('" + scenes[currentIndex].src + "')");
+    root.style.backgroundImage = 'url("' + scenes[currentIndex].src + '")';
     announceScene('transition');
   }
 
@@ -421,7 +469,8 @@
     var minimumFrameTime = lowPower ? 1000 / 30 : 1000 / 60;
     if (now - lastFrame >= minimumFrameTime) {
       lastFrame = now;
-      if (!isTransitioning && now - lastSceneAt >= sceneDuration) nextScene('auto');
+      var activeDuration = fastDemo ? sceneDuration : (scenes[currentIndex].duration || sceneDuration);
+      if (!isTransitioning && now - lastSceneAt >= activeDuration) nextScene('auto');
       draw(now);
       drawParticles(now);
     }
@@ -444,11 +493,13 @@
   Promise.all(scenes.map(makeTexture)).then(function (loadedTextures) {
     textures = loadedTextures;
     root.classList.add('is-ready');
+    root.dataset.ready = 'ready';
     draw(performance.now(), 0);
     announceScene('initial');
     if (!reducedMotion) frameId = requestAnimationFrame(frame);
   }).catch(function (error) {
     console.warn('[CinematicBackground] Image fallback:', error);
     root.classList.add('is-fallback');
+    root.dataset.ready = 'fallback';
   });
 }());
