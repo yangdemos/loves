@@ -261,7 +261,6 @@
     return new Promise(function (resolve, reject) {
       var image = new Image();
       image.decoding = 'async';
-      image.crossOrigin = 'anonymous';
       image.onload = function () {
         var upload = function () {
           try {
@@ -289,6 +288,22 @@
       };
       image.onerror = function () { reject(new Error('Unable to load ' + scene.src)); };
       image.src = scene.src;
+    });
+  }
+
+  function loadSceneTextures() {
+    return Promise.all(scenes.map(function (scene) {
+      return makeTexture(scene).then(function (textureInfo) {
+        return { scene: scene, textureInfo: textureInfo };
+      }).catch(function (error) {
+        console.warn('[CinematicBackground] Scene skipped:', scene.src, error);
+        return null;
+      });
+    })).then(function (results) {
+      var loaded = results.filter(function (item) { return item && item.textureInfo; });
+      if (!loaded.length) throw new Error('No cinematic scenes loaded');
+      scenes = loaded.map(function (item) { return item.scene; });
+      return loaded.map(function (item) { return item.textureInfo; });
     });
   }
 
@@ -490,10 +505,23 @@
   }, { once: true });
 
   resize();
-  Promise.all(scenes.map(makeTexture)).then(function (loadedTextures) {
+  loadSceneTextures().then(function (loadedTextures) {
     textures = loadedTextures;
+    currentIndex = 0;
+    nextIndex = textures.length > 1 ? 1 : 0;
+    root.style.backgroundImage = 'url("' + scenes[currentIndex].src + '")';
+    root.dataset.assetCount = String(textures.length);
     root.classList.add('is-ready');
     root.dataset.ready = 'ready';
+    exposeApi({
+      nextScene: nextScene,
+      previousScene: previousScene,
+      goToScene: goToScene,
+      getCurrentScene: function () {
+        return { index: currentIndex, name: scenes[currentIndex].name };
+      },
+      scenes: scenes.map(function (scene) { return scene.name; })
+    });
     draw(performance.now(), 0);
     announceScene('initial');
     if (!reducedMotion) frameId = requestAnimationFrame(frame);
@@ -501,5 +529,6 @@
     console.warn('[CinematicBackground] Image fallback:', error);
     root.classList.add('is-fallback');
     root.dataset.ready = 'fallback';
+    root.dataset.assetCount = '0';
   });
 }());
