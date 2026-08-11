@@ -7,7 +7,7 @@ body {
 }
 
 #cinematic-background {
-  --cinematic-fallback: url('../images/cinematic/mountain-clouds.webp');
+  --cinematic-fallback: url('../images/cinematic/south-island-cliff-day.webp');
   position: fixed;
   inset: 0;
   z-index: 0;
