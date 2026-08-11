@@ -13,7 +13,12 @@ const TAU = Math.PI * 2;
 const SYSTEM_REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HOME_URL = 'home.html?v=6e5c981&cinematicMotion=force';
-const GUN_LOCK_GRACE = 560;
+const GUN_LOCK_GRACE = 420;
+const GUN_ARM_FRAMES = 4;
+const GUN_ARM_TIME = 240;
+const SHOT_MIN_LIFT = .125;
+const SHOT_MIN_SPEED = .22;
+const SHOT_VERTICAL_DOMINANCE = 1.15;
 const HOME_ENTRY_DELAY = SYSTEM_REDUCED ? 1800 : 3400;
 const LABELS = {
   IDLE: '等待手势',
@@ -55,8 +60,11 @@ const state = {
   gunArmed: false,
   gunArmedAt: 0,
   gunLastSeenAt: 0,
+  gunBaseX: 0,
+  gunBaseY: 0,
   gunMotion: [],
   liftProgress: 0,
+  liftUpFrames: 0,
   shotCooldownUntil: 0,
   explosionAt: 0,
   messageAt: 0,
@@ -575,10 +583,24 @@ function mapHandToScreen(landmarks) {
   const screenY = lerp(marginY, state.height - marginY, clamp((y - .04) / .92, 0, 1));
   const gap = Math.hypot(screenX - state.targetX, screenY - state.targetY);
 
-  if (gap < 2.4) return;
-  const adaptive = clamp(.2 + gap / Math.max(state.width, state.height) * 1.4, .2, .46);
+  if (gap < 1.2) return;
+  const adaptive = clamp(.3 + gap / Math.max(state.width, state.height) * 1.8, .3, .62);
   state.targetX = lerp(state.targetX, screenX, adaptive);
   state.targetY = lerp(state.targetY, screenY, adaptive);
+}
+
+function palmCenterRaw(landmarks) {
+  const palmIds = [0, 5, 9, 13, 17];
+  let x = 0;
+  let y = 0;
+  for (const id of palmIds) {
+    x += landmarks[id].x;
+    y += landmarks[id].y;
+  }
+  return {
+    x: x / palmIds.length,
+    y: y / palmIds.length
+  };
 }
 
 function classifyHand(landmarks) {
@@ -631,7 +653,7 @@ function updateGesture(landmarks, now) {
   if (state.mode === 'FIRE' || state.mode === 'MESSAGE') return;
   const pose = classifyHand(landmarks);
   state.handSeenAt = now;
-  const palmY = (landmarks[0].y + landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 5;
+  const palm = palmCenterRaw(landmarks);
 
   const gunLockGrace = state.gunArmed && pose.gunShape && now - state.gunLastSeenAt <= GUN_LOCK_GRACE;
   const gunActive = pose.gun || gunLockGrace;
@@ -648,12 +670,15 @@ function updateGesture(landmarks, now) {
       state.gunLastSeenAt = now;
     }
 
-    if (pose.gun && now - state.candidateSince >= 160 && !state.gunArmed) {
+    if (pose.gun && state.gunFrames >= GUN_ARM_FRAMES && now - state.candidateSince >= GUN_ARM_TIME && !state.gunArmed) {
       state.gunArmed = true;
       state.gunArmedAt = now;
       state.lockedX = state.heartX;
       state.lockedY = state.heartY;
-      state.gunMotion = [{ y: palmY, time: now }];
+      state.gunBaseX = palm.x;
+      state.gunBaseY = palm.y;
+      state.liftUpFrames = 0;
+      state.gunMotion = [{ x: palm.x, y: palm.y, time: now }];
     }
 
     if (state.gunArmed) {
@@ -661,21 +686,30 @@ function updateGesture(landmarks, now) {
       state.gesture = 'GUN';
       state.targetX = state.lockedX;
       state.targetY = state.lockedY;
-      state.gunMotion.push({ y: palmY, time: now });
-      state.gunMotion = state.gunMotion.filter(sample => now - sample.time <= 700);
+      const previous = state.gunMotion[state.gunMotion.length - 1];
+      if (previous && previous.y - palm.y > .006) state.liftUpFrames++;
+      else if (previous && palm.y - previous.y > .004) state.liftUpFrames = Math.max(0, state.liftUpFrames - 1);
+      state.gunMotion.push({ x: palm.x, y: palm.y, time: now });
+      state.gunMotion = state.gunMotion.filter(sample => now - sample.time <= 850);
     } else {
       state.mode = 'MOVE';
       state.gesture = 'MOVE';
       mapHandToScreen(landmarks);
     }
 
-    if (pose.gun && state.gunArmed && now > state.gunArmedAt + 180 && now > state.shotCooldownUntil) {
-      const baseline = state.gunMotion.find(sample => now - sample.time >= 160) || state.gunMotion[0];
-      const elapsedSeconds = Math.max(.08, (now - baseline.time) / 1000);
-      const upwardTravel = baseline.y - palmY;
+    if (pose.gun && state.gunArmed && now > state.gunArmedAt + 220 && now > state.shotCooldownUntil) {
+      const elapsedSeconds = Math.max(.12, (now - state.gunArmedAt) / 1000);
+      const upwardTravel = state.gunBaseY - palm.y;
+      const horizontalTravel = Math.abs(palm.x - state.gunBaseX);
       const upwardSpeed = upwardTravel / elapsedSeconds;
-      state.liftProgress = clamp(upwardTravel / .06, 0, 1);
-      if (upwardTravel > .06 && upwardSpeed > .11) {
+      const verticalDominant = upwardTravel > horizontalTravel * SHOT_VERTICAL_DOMINANCE;
+      state.liftProgress = clamp(upwardTravel / SHOT_MIN_LIFT, 0, 1);
+      if (
+        upwardTravel > SHOT_MIN_LIFT
+        && upwardSpeed > SHOT_MIN_SPEED
+        && verticalDominant
+        && state.liftUpFrames >= 2
+      ) {
         beginExplosion(now);
         return;
       }
@@ -687,6 +721,7 @@ function updateGesture(landmarks, now) {
     state.gunArmed = false;
     state.gunMotion = [];
     state.liftProgress = 0;
+    state.liftUpFrames = 0;
     state.mode = 'MOVE';
     state.gesture = 'MOVE';
     mapHandToScreen(landmarks);
@@ -704,6 +739,7 @@ function beginExplosion(now = performance.now()) {
   state.gunArmed = false;
   state.gunMotion = [];
   state.liftProgress = 0;
+  state.liftUpFrames = 0;
 
   const speedBase = Math.min(state.width, state.height) * .0055;
   for (let index = 0; index < state.particles.length; index++) {
@@ -863,6 +899,7 @@ function resetLostHand(now = performance.now()) {
   state.gunArmed = false;
   state.gunMotion = [];
   state.liftProgress = 0;
+  state.liftUpFrames = 0;
   if (state.mode !== 'FIRE' && state.mode !== 'MESSAGE') state.mode = 'IDLE';
   updateDebug();
 }
@@ -881,9 +918,9 @@ async function initializeRecognition() {
       baseOptions: { modelAssetPath: modelPath, delegate: 'GPU' },
       runningMode: 'VIDEO',
       numHands: 1,
-      minHandDetectionConfidence: .68,
-      minHandPresenceConfidence: .64,
-      minTrackingConfidence: .68
+      minHandDetectionConfidence: .56,
+      minHandPresenceConfidence: .54,
+      minTrackingConfidence: .58
     };
 
     try {
@@ -933,9 +970,9 @@ async function startCamera() {
       audio: false,
       video: {
         facingMode: 'user',
-        width: { ideal: 320, max: 424 },
-        height: { ideal: 240, max: 320 },
-        frameRate: { ideal: 15, max: 20 }
+        width: { ideal: 424, max: 640 },
+        height: { ideal: 320, max: 480 },
+        frameRate: { ideal: 24, max: 30 }
       }
     });
 
@@ -989,7 +1026,7 @@ async function detectHands() {
   const now = performance.now();
   const hasNewFrame = state.video.readyState >= 2 && state.video.currentTime !== state.lastVideoTime;
   let inferenceTime = 0;
-  if (hasNewFrame && now - state.lastDetectionAt >= 86) {
+  if (hasNewFrame && now - state.lastDetectionAt >= 48) {
     state.lastVideoTime = state.video.currentTime;
     state.lastDetectionAt = now;
     try {
@@ -1006,7 +1043,7 @@ async function detectHands() {
     }
   }
 
-  const nextDelay = clamp(70 + inferenceTime, 86, 190);
+  const nextDelay = clamp(32 + inferenceTime * .8, 46, 110);
   state.detectionTimer = setTimeout(detectHands, nextDelay);
 }
 

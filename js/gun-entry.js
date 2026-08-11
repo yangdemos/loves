@@ -79,6 +79,9 @@ const PALM_SMOOTH = 0.5; // EMA 系数
 let lastPalmPos = null;
 let swingAcc = 0;
 let swingDir = null;
+let gunBaseX = 0;
+let gunBaseY = 0;
+let liftUpFrames = 0;
 const SWING_STEP_MIN = 0.004; // 忽略的微抖
 const SWING_FIRE = 0.15;      // 累计挥动距离阈值
 
@@ -342,6 +345,9 @@ function resetGunTracking() {
     lastPalmPos = null;
     swingAcc = 0;
     swingDir = null;
+    gunBaseX = 0;
+    gunBaseY = 0;
+    liftUpFrames = 0;
     gunFrames = 0;
     nonGunFrames = 0;
 }
@@ -376,9 +382,12 @@ function handleHand(lm) {
             mode = "GUN";
             gunSince = performance.now();
             resetGunTracking();
+            gunBaseX = cx;
+            gunBaseY = cy;
+            lastPalmPos = { x: cx, y: cy };
             crosshair.classList.add("on");
             setStep(1);
-            setStatus("目标锁定 — 挥动手臂开枪");
+            setStatus("目标锁定 — 抬起手开枪");
         }
     } else {
         gunFrames = 0;
@@ -416,7 +425,23 @@ function handleHand(lm) {
                 swingDir = null;
             }
 
-            if (swingAcc > SWING_FIRE) {
+            if (lastPalmPos.y - cy > 0.006 && lastPalmPos.y - cy > Math.abs(cx - lastPalmPos.x) * 0.8) {
+                liftUpFrames++;
+            } else if (cy - lastPalmPos.y > 0.004) {
+                liftUpFrames = Math.max(0, liftUpFrames - 1);
+            }
+
+            const elapsedSeconds = Math.max(0.12, (performance.now() - gunSince) / 1000);
+            const upwardTravel = gunBaseY - cy;
+            const horizontalTravel = Math.abs(cx - gunBaseX);
+            const upwardSpeed = upwardTravel / elapsedSeconds;
+            if (
+                performance.now() - gunSince > 220 &&
+                upwardTravel > 0.13 &&
+                upwardSpeed > 0.22 &&
+                upwardTravel > horizontalTravel * 1.15 &&
+                liftUpFrames >= 2
+            ) {
                 fire();
                 return;
             }
