@@ -12,7 +12,7 @@ const debugDetail = document.getElementById('debug-detail');
 const TAU = Math.PI * 2;
 const SYSTEM_REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEBUG = new URLSearchParams(location.search).has('debug');
-const HOME_URL = 'home.html?v=6e5c981&cinematicMotion=force';
+const HOME_URL = 'home.html?v=20260811-weiyi-latest&cinematicMotion=force';
 const GUN_LOCK_GRACE = 560;
 const GUN_ARM_FRAMES = 2;
 const GUN_ARM_TIME = 120;

@@ -11,7 +11,7 @@
   window.__BGM_INIT__ = true;
 
   var BTN_ID = 'bgm-toggle';
-  var SRC = 'assets/music/bg_piano.mp3';
+  var SRC = 'assets/music/weiyi.mp3';
 
   var audio = new Audio();
   audio.src = SRC;

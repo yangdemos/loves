@@ -30,7 +30,7 @@ const enterText = document.getElementById("enterText");
 const fallback = document.getElementById("fallback");
 const fallbackMsg = document.getElementById("fbMsg");
 const enterBtn = document.getElementById("enterBtn");
-const HOME_URL = "home.html?v=6e5c981&cinematicMotion=force";
+const HOME_URL = "home.html?v=20260811-weiyi-latest&cinematicMotion=force";
 
 // ── 错误透出：任何异常直接显示到页面，不留死寂 ──
 function withTimeout(promise, ms, failMsg) {
