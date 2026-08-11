@@ -12,6 +12,7 @@ const debugDetail = document.getElementById('debug-detail');
 const TAU = Math.PI * 2;
 const SYSTEM_REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEBUG = new URLSearchParams(location.search).has('debug');
+const HOME_URL = 'home.html?v=6e5c981&cinematicMotion=force';
 const GUN_LOCK_GRACE = 560;
 const HOME_ENTRY_DELAY = SYSTEM_REDUCED ? 1800 : 3400;
 const LABELS = {
@@ -442,7 +443,7 @@ function enterHome() {
   if (state.homeTransitionStarted) return;
   state.homeTransitionStarted = true;
   statusNode.textContent = '正在进入网站';
-  window.location.assign('home.html');
+  window.location.assign(HOME_URL);
 }
 
 function getMessageLayout() {
