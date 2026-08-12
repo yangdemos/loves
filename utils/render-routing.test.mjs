@@ -121,8 +121,12 @@ test('Render-style root redirects to home and video keeps ranged responses', asy
 
     const homeResponse = await request(3102, '/home.html');
     assert.equal(homeResponse.statusCode, 200);
-    assert.match(homeResponse.body, /id="bg-video"/);
-    assert.match(homeResponse.body, /coverr_video\.mp4/);
+    assert.match(homeResponse.body, /id="cinematic-canvas"/);
+    assert.match(homeResponse.body, /cinematic-background\.js/);
+    assert.match(homeResponse.body, /js\/subpage-shell\.js/);
+    assert.match(homeResponse.body, /data-subpage-target="story"/);
+    assert.match(homeResponse.body, /data-subpage-target="letter"/);
+    assert.doesNotMatch(homeResponse.body, /js\/letter-page\.js/);
 
     const videoResponse = await request(3102, '/coverr_video.mp4', {
       headers: { Range: 'bytes=0-1023' },

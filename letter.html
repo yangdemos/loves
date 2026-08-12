@@ -60,5 +60,22 @@
 
     <script src="js/data.js"></script>
     <script src="js/letter-page.js"></script>
+    <script>
+      (function () {
+        if (window.top === window.self) {
+          window.location.replace('home.html?subpage=letter');
+          return;
+        }
+
+        function closeShell(event) {
+          event.preventDefault();
+          window.parent.postMessage({ type: 'subpage-shell:close' }, window.location.origin || '*');
+        }
+
+        document.querySelectorAll('.letter-return, .letter-sheet-home-link').forEach(function (link) {
+          link.addEventListener('click', closeShell);
+        });
+      }());
+    </script>
 </body>
 </html>

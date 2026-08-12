@@ -6,6 +6,8 @@
 (function () {
   'use strict';
 
+  if (window.top !== window.self) return;
+
   // 防止同页重复初始化（例如脚本被重复引用时）
   if (window.__BGM_INIT__) return;
   window.__BGM_INIT__ = true;
@@ -18,6 +20,13 @@
   audio.loop = true;
   audio.preload = 'auto';
   audio.volume = 0.7;
+
+  window.__BGM__ = {
+    audio: audio,
+    isPlaying: function () { return playing; },
+    start: start,
+    stop: stop
+  };
 
   var playing = false;
 

@@ -113,7 +113,23 @@
             <p>因为在那里，<br />我第一次见到了你。</p>
             <a href="home.html" class="story-back">返回我们的故事</a>
         </div>
-    </main>
+</main>
 
+    <script>
+      (function () {
+        if (window.top === window.self) {
+          window.location.replace('home.html?subpage=story');
+          return;
+        }
+
+        var backLink = document.querySelector('.story-back');
+        if (!backLink) return;
+
+        backLink.addEventListener('click', function (event) {
+          event.preventDefault();
+          window.parent.postMessage({ type: 'subpage-shell:close' }, window.location.origin || '*');
+        });
+      }());
+    </script>
 </body>
 </html>

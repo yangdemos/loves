@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/style.css?v=20260812-shell1" />
     <link rel="stylesheet" href="css/responsive.css" />
     <link rel="stylesheet" href="css/cinematic-background.css?v=20260812-canvas-restore" />
     <style>
@@ -139,7 +139,7 @@
                     <span class="story-date">2024.10.21</span>
                     <h3>我们在世界碰撞的那一天</h3>
                     <p>我们的故事，开始在海口新埠岛一家其实并不怎么好吃的烧烤店。那天，你开着一辆保时捷出现，而我，只是一个正在海口出差、口袋也没多少钱的普通男生。那一天没有什么精心的安排，甚至连烧烤都不好吃，可偏偏是这样一个有点乱的夜晚，成了我们故事的第一页。</p>
-                    <a href="story.html" class="story-more">阅读全文</a>
+                    <a href="story.html" class="story-more" data-subpage-target="story">阅读全文</a>
                 </div>
             </div>
         </div>
@@ -156,7 +156,7 @@
                 <p class="section-desc">来自心底的话语</p>
             </div>
             <div class="letter-card">
-                <a class="envelope-open" id="envelope-open" href="letter.html" aria-label="打开情书，进入信纸页面">
+                <a class="envelope-open" id="envelope-open" href="letter.html" data-subpage-target="letter" aria-label="打开情书，进入信纸页面">
                     <span class="envelope">
                         <span class="envelope-flap"></span>
                         <span class="envelope-paper-peek"></span>
@@ -438,11 +438,11 @@
     <!-- Local scripts -->
       <script src="js/cinematic-background.js?v=20260812-canvas-restore"></script>
     <script src="js/data.js"></script>
-    <script src="js/letter-page.js"></script>
     <script src="js/globe.js"></script>
     <script src="js/main.js"></script>
     <script src="js/video-maker.js"></script>
     <script src="js/reminder.js"></script>
+    <script src="js/subpage-shell.js?v=20260812-shell1"></script>
     <script src="js/bgm.js?v=20260811-weiyi"></script>
 
     <!-- Random rotating subtitle: same title lines fixed big & bold, only the love-line below swaps -->

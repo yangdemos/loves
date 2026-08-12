@@ -2833,3 +2833,95 @@ input, textarea { font-family: inherit; }
   opacity: 1;
   visibility: visible;
 }
+
+body.subpage-shell-open {
+  overflow: hidden;
+}
+
+.subpage-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .28s ease, visibility .28s ease;
+}
+
+.subpage-shell.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.subpage-shell__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 7, 14, 0.68);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.subpage-shell__panel {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  min-height: 100vh;
+  padding: clamp(18px, 4vw, 36px);
+}
+
+.subpage-shell__frame {
+  width: 100%;
+  min-height: 100%;
+  border: 0;
+  border-radius: 28px;
+  background: var(--bg-deep);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34);
+}
+
+.subpage-shell__close {
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top, 0px) + 12px);
+  right: 18px;
+  z-index: 9998;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(12, 16, 28, 0.72);
+  color: rgba(255, 255, 255, 0.92);
+  font: 500 24px/1 Inter, "PingFang SC", sans-serif;
+  cursor: pointer;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24);
+  transition: transform .28s ease, background .28s ease, border-color .28s ease;
+}
+
+.subpage-shell__close:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: rgba(24, 28, 44, 0.88);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.subpage-shell__close:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 700px) {
+  .subpage-shell__panel {
+    padding: 0;
+  }
+
+  .subpage-shell__frame {
+    border-radius: 0;
+  }
+
+  .subpage-shell__close {
+    width: 44px;
+    height: 44px;
+    right: 14px;
+  }
+}

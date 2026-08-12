@@ -46,6 +46,7 @@
   function setupEnvelopeLink() {
     const envelopeOpen = document.getElementById('envelope-open');
     if (!envelopeOpen || envelopeOpen.tagName !== 'A') return;
+    if (envelopeOpen.hasAttribute('data-subpage-target')) return;
 
     envelopeOpen.addEventListener('click', function(event) {
       if (
